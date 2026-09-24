@@ -106,21 +106,21 @@ final class NanoCADUITests: XCTestCase {
         let composer = app.textViews["composer"]
         XCTAssertTrue(composer.waitForExistence(timeout: 3))
         composer.tap()
-        composer.typeText("8 mm plate")
-        waitForValue("8 mm plate", of: composer)
+        composer.typeText("small steel plate")
+        waitForValue("small steel plate", of: composer)
 
         // UITextView has zero horizontal inset and an eight-point top inset.
-        // Double-tap the first digit to select that word with the native edit menu.
+        // Select the first word. Avoid measurement tokens, which iOS selects as a unit.
         composer.coordinate(withNormalizedOffset: .zero)
             .withOffset(CGVector(dx: 6, dy: 18)).doubleTap()
         let selectionMenu = expectation(for: NSPredicate { _, _ in
             app.menuItems["Cut"].exists || app.buttons["Cut"].exists
         }, evaluatedWith: nil)
         wait(for: [selectionMenu], timeout: 3)
-        composer.typeText("12")
-        waitForValue("12 mm plate", of: composer)
-        composer.typeText("0")
-        waitForValue("120 mm plate", of: composer)
+        composer.typeText("large")
+        waitForValue("large steel plate", of: composer)
+        composer.typeText("r")
+        waitForValue("larger steel plate", of: composer)
         XCTAssertTrue(app.buttons["send"].isEnabled)
     }
 
