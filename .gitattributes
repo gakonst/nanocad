@@ -1,0 +1,3 @@
+# STEP revision identity depends on exact exported bytes, including OCCT formatting.
+*.step -text -whitespace
+*.cad.json -text

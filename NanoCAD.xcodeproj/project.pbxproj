@@ -1,0 +1,605 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		10C8DA090DDEF64CEE3E6B3E /* precision-bracket.cad.json in Resources */ = {isa = PBXBuildFile; fileRef = 0EDAF6BA0BBF5DAF75EECE13 /* precision-bracket.cad.json */; };
+		1989294B022140BC6B694B44 /* NanocodexClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C38BCBDC0E403D1DF354A5 /* NanocodexClient.swift */; };
+		2260A602D855D2FA556CBBEA /* ConnectionCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 029E20FA55FAA4368D3EB7C3 /* ConnectionCredentials.swift */; };
+		2D08B88B2F38C50F0C070A50 /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */; };
+		43CB1E1DA15F39B2910926A1 /* ChatComposerEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A4599485301079F156374F /* ChatComposerEditor.swift */; };
+		4567C1C762DECC8C526A9078 /* NanoCADApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E8CDCD3183E7CAFCC43D38 /* NanoCADApp.swift */; };
+		5AE8AB46BA033A58B8AEDA43 /* TopologyInspector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A1D2A232E1F3881E5939156 /* TopologyInspector.swift */; };
+		5B367758D81C40613925087A /* NanoCADUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97F945FE4A769D16EF019B9D /* NanoCADUITests.swift */; };
+		703939E936A236A3FDB422DE /* GenerationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 080236ED0BB5DA49D710BFA0 /* GenerationTests.swift */; };
+		71C3CC25B7A92DD3A2361607 /* CADComposer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 085E12DC5FA964073D36BF0F /* CADComposer.swift */; };
+		8173938961AC520BF1E8A72A /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11123346C198E661CEFE7292 /* DrawingCanvas.swift */; };
+		85C09ABFC283958BF0F90372 /* CADDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138A64FFA48B62FF983E7835 /* CADDocument.swift */; };
+		94FA3F9CA432DB071D0B2B2A /* precision-bracket.step in Resources */ = {isa = PBXBuildFile; fileRef = 5F71F697C3BF4FC87798555A /* precision-bracket.step */; };
+		99BD710FC458257A63A54A87 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 324A51CF0961CC262289DB87 /* Assets.xcassets */; };
+		A6C6984EBC37E44B5BD6DF59 /* export_step.py in Resources */ = {isa = PBXBuildFile; fileRef = CC4A79A93CB246A0EDBAFBEE /* export_step.py */; };
+		AA9EFEF85B2BBAC21706769F /* CADViewport.swift in Sources */ = {isa = PBXBuildFile; fileRef = E11DAF517730F05B31CB26C5 /* CADViewport.swift */; };
+		BA7933C6BD0FFBD885E589DD /* ConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D56236E5D07578A9BCDFEECB /* ConnectionView.swift */; };
+		CC07F418C288BF84257C696B /* NanocodexHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95219125BBA18E22AD34CCDB /* NanocodexHTTPTests.swift */; };
+		CC3F04980EE1BB615CF84057 /* CADDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */; };
+		D397B91280C2CF00EA9E3D58 /* GenerationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D97367F0CD167253143D782 /* GenerationController.swift */; };
+		D6CE60B6173D7C60DE5843D2 /* WorkspacePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94368EEEF6866856072AEE1E /* WorkspacePersistence.swift */; };
+		F050ECB6DA3E4CE04070CE46 /* NanocodexClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0904AF200B5F52E1A2D4961 /* NanocodexClientTests.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		833F2CD1EB45AC57CB48DE63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 36C6DC0640565E9E36AA5FCD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7FFBA344AF40776EAC0051CE;
+			remoteInfo = NanoCAD;
+		};
+		8F920DA8D282EB6476F9921B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 36C6DC0640565E9E36AA5FCD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 7FFBA344AF40776EAC0051CE;
+			remoteInfo = NanoCAD;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		029E20FA55FAA4368D3EB7C3 /* ConnectionCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionCredentials.swift; sourceTree = "<group>"; };
+		0525A40F1E757A3EE7BBCD7F /* NanoCADTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NanoCADTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		07E8CDCD3183E7CAFCC43D38 /* NanoCADApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanoCADApp.swift; sourceTree = "<group>"; };
+		080236ED0BB5DA49D710BFA0 /* GenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationTests.swift; sourceTree = "<group>"; };
+		085E12DC5FA964073D36BF0F /* CADComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADComposer.swift; sourceTree = "<group>"; };
+		0EDAF6BA0BBF5DAF75EECE13 /* precision-bracket.cad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "precision-bracket.cad.json"; sourceTree = "<group>"; };
+		11123346C198E661CEFE7292 /* DrawingCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvas.swift; sourceTree = "<group>"; };
+		138A64FFA48B62FF983E7835 /* CADDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocument.swift; sourceTree = "<group>"; };
+		2D97367F0CD167253143D782 /* GenerationController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationController.swift; sourceTree = "<group>"; };
+		30A4599485301079F156374F /* ChatComposerEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatComposerEditor.swift; sourceTree = "<group>"; };
+		324A51CF0961CC262289DB87 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocumentTests.swift; sourceTree = "<group>"; };
+		5F71F697C3BF4FC87798555A /* precision-bracket.step */ = {isa = PBXFileReference; path = "precision-bracket.step"; sourceTree = "<group>"; };
+		85A8CCCC0470380A20133D84 /* NanoCADUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NanoCADUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		8A1D2A232E1F3881E5939156 /* TopologyInspector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyInspector.swift; sourceTree = "<group>"; };
+		94368EEEF6866856072AEE1E /* WorkspacePersistence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspacePersistence.swift; sourceTree = "<group>"; };
+		95219125BBA18E22AD34CCDB /* NanocodexHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanocodexHTTPTests.swift; sourceTree = "<group>"; };
+		97F945FE4A769D16EF019B9D /* NanoCADUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanoCADUITests.swift; sourceTree = "<group>"; };
+		B0904AF200B5F52E1A2D4961 /* NanocodexClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanocodexClientTests.swift; sourceTree = "<group>"; };
+		B4C38BCBDC0E403D1DF354A5 /* NanocodexClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanocodexClient.swift; sourceTree = "<group>"; };
+		CC4A79A93CB246A0EDBAFBEE /* export_step.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = export_step.py; sourceTree = "<group>"; };
+		CF1B4AC8BB0A7D1B6AC4127E /* NanoCAD.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = NanoCAD.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D56236E5D07578A9BCDFEECB /* ConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionView.swift; sourceTree = "<group>"; };
+		DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
+		E11DAF517730F05B31CB26C5 /* CADViewport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADViewport.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		09FAE38016401B123734DBEC /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				324A51CF0961CC262289DB87 /* Assets.xcassets */,
+				CC4A79A93CB246A0EDBAFBEE /* export_step.py */,
+				0EDAF6BA0BBF5DAF75EECE13 /* precision-bracket.cad.json */,
+				5F71F697C3BF4FC87798555A /* precision-bracket.step */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		11B0AF9EF66214C805948058 = {
+			isa = PBXGroup;
+			children = (
+				C90883E8A7453D0BBEBC0D10 /* App */,
+				C522DA54900ADDF6AADDA259 /* Core */,
+				09FAE38016401B123734DBEC /* Resources */,
+				21D2B42EC80953E74824B184 /* Tests */,
+				9AF13A49278C9B60D5FDA008 /* UITests */,
+				AE474443750767B3C0C6BA94 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		21D2B42EC80953E74824B184 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */,
+				080236ED0BB5DA49D710BFA0 /* GenerationTests.swift */,
+				B0904AF200B5F52E1A2D4961 /* NanocodexClientTests.swift */,
+				95219125BBA18E22AD34CCDB /* NanocodexHTTPTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
+		9AF13A49278C9B60D5FDA008 /* UITests */ = {
+			isa = PBXGroup;
+			children = (
+				97F945FE4A769D16EF019B9D /* NanoCADUITests.swift */,
+			);
+			path = UITests;
+			sourceTree = "<group>";
+		};
+		AE474443750767B3C0C6BA94 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CF1B4AC8BB0A7D1B6AC4127E /* NanoCAD.app */,
+				0525A40F1E757A3EE7BBCD7F /* NanoCADTests.xctest */,
+				85A8CCCC0470380A20133D84 /* NanoCADUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		C522DA54900ADDF6AADDA259 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				138A64FFA48B62FF983E7835 /* CADDocument.swift */,
+				029E20FA55FAA4368D3EB7C3 /* ConnectionCredentials.swift */,
+				2D97367F0CD167253143D782 /* GenerationController.swift */,
+				B4C38BCBDC0E403D1DF354A5 /* NanocodexClient.swift */,
+				94368EEEF6866856072AEE1E /* WorkspacePersistence.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		C90883E8A7453D0BBEBC0D10 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				085E12DC5FA964073D36BF0F /* CADComposer.swift */,
+				E11DAF517730F05B31CB26C5 /* CADViewport.swift */,
+				30A4599485301079F156374F /* ChatComposerEditor.swift */,
+				D56236E5D07578A9BCDFEECB /* ConnectionView.swift */,
+				11123346C198E661CEFE7292 /* DrawingCanvas.swift */,
+				07E8CDCD3183E7CAFCC43D38 /* NanoCADApp.swift */,
+				8A1D2A232E1F3881E5939156 /* TopologyInspector.swift */,
+				DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		414BB283A4FAA8A5A015F16F /* NanoCADUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1753A1EEF0E3BD6B43F0578D /* Build configuration list for PBXNativeTarget "NanoCADUITests" */;
+			buildPhases = (
+				0ADC126B970E4873DCADA094 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				BC399FE14FD1C9BEF2EF48E4 /* PBXTargetDependency */,
+			);
+			name = NanoCADUITests;
+			packageProductDependencies = (
+			);
+			productName = NanoCADUITests;
+			productReference = 85A8CCCC0470380A20133D84 /* NanoCADUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		7D43491BA8DB948699C70462 /* NanoCADTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F8C58A070C0F7880187E99E3 /* Build configuration list for PBXNativeTarget "NanoCADTests" */;
+			buildPhases = (
+				78B27A05FA1DDB78B89B97A9 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5F64092F1D9D6A271E4461A2 /* PBXTargetDependency */,
+			);
+			name = NanoCADTests;
+			packageProductDependencies = (
+			);
+			productName = NanoCADTests;
+			productReference = 0525A40F1E757A3EE7BBCD7F /* NanoCADTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		7FFBA344AF40776EAC0051CE /* NanoCAD */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0AE2BA94EC600DDEA9604EBC /* Build configuration list for PBXNativeTarget "NanoCAD" */;
+			buildPhases = (
+				ACFB07A06E0796D6CE037C33 /* Sources */,
+				9C040EBE7455AC3AE444BAF3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NanoCAD;
+			packageProductDependencies = (
+			);
+			productName = NanoCAD;
+			productReference = CF1B4AC8BB0A7D1B6AC4127E /* NanoCAD.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		36C6DC0640565E9E36AA5FCD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					414BB283A4FAA8A5A015F16F = {
+						DevelopmentTeam = "";
+						TestTargetID = 7FFBA344AF40776EAC0051CE;
+					};
+					7D43491BA8DB948699C70462 = {
+						DevelopmentTeam = "";
+					};
+					7FFBA344AF40776EAC0051CE = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = 12D81E8976DEAD371E2A6CE9 /* Build configuration list for PBXProject "NanoCAD" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 11B0AF9EF66214C805948058;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AE474443750767B3C0C6BA94 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				7FFBA344AF40776EAC0051CE /* NanoCAD */,
+				7D43491BA8DB948699C70462 /* NanoCADTests */,
+				414BB283A4FAA8A5A015F16F /* NanoCADUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		9C040EBE7455AC3AE444BAF3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				99BD710FC458257A63A54A87 /* Assets.xcassets in Resources */,
+				A6C6984EBC37E44B5BD6DF59 /* export_step.py in Resources */,
+				10C8DA090DDEF64CEE3E6B3E /* precision-bracket.cad.json in Resources */,
+				94FA3F9CA432DB071D0B2B2A /* precision-bracket.step in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0ADC126B970E4873DCADA094 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5B367758D81C40613925087A /* NanoCADUITests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		78B27A05FA1DDB78B89B97A9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC3F04980EE1BB615CF84057 /* CADDocumentTests.swift in Sources */,
+				703939E936A236A3FDB422DE /* GenerationTests.swift in Sources */,
+				F050ECB6DA3E4CE04070CE46 /* NanocodexClientTests.swift in Sources */,
+				CC07F418C288BF84257C696B /* NanocodexHTTPTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		ACFB07A06E0796D6CE037C33 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				71C3CC25B7A92DD3A2361607 /* CADComposer.swift in Sources */,
+				85C09ABFC283958BF0F90372 /* CADDocument.swift in Sources */,
+				AA9EFEF85B2BBAC21706769F /* CADViewport.swift in Sources */,
+				43CB1E1DA15F39B2910926A1 /* ChatComposerEditor.swift in Sources */,
+				2260A602D855D2FA556CBBEA /* ConnectionCredentials.swift in Sources */,
+				BA7933C6BD0FFBD885E589DD /* ConnectionView.swift in Sources */,
+				8173938961AC520BF1E8A72A /* DrawingCanvas.swift in Sources */,
+				D397B91280C2CF00EA9E3D58 /* GenerationController.swift in Sources */,
+				4567C1C762DECC8C526A9078 /* NanoCADApp.swift in Sources */,
+				1989294B022140BC6B694B44 /* NanocodexClient.swift in Sources */,
+				5AE8AB46BA033A58B8AEDA43 /* TopologyInspector.swift in Sources */,
+				D6CE60B6173D7C60DE5843D2 /* WorkspacePersistence.swift in Sources */,
+				2D08B88B2F38C50F0C070A50 /* WorkspaceView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5F64092F1D9D6A271E4461A2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7FFBA344AF40776EAC0051CE /* NanoCAD */;
+			targetProxy = 8F920DA8D282EB6476F9921B /* PBXContainerItemProxy */;
+		};
+		BC399FE14FD1C9BEF2EF48E4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 7FFBA344AF40776EAC0051CE /* NanoCAD */;
+			targetProxy = 833F2CD1EB45AC57CB48DE63 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		169321310CA88DC1BC1FE632 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = NanoCAD;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		56549624B233E33C3F2831D3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGNING_ALLOWED = NO;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = NanoCAD;
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UIFileSharingEnabled = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		61AB2EB06051C2037B1AFC35 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.NanoCADTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NanoCAD.app/NanoCAD";
+			};
+			name = Debug;
+		};
+		964C040956046C775CAC30E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.nanocad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B3978CE393EB32F83FFEF633 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.NanoCADTests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/NanoCAD.app/NanoCAD";
+			};
+			name = Release;
+		};
+		B964F6892CADA584ECC815F4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.NanoCADUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = NanoCAD;
+			};
+			name = Release;
+		};
+		C2A86B1F320496F1F4E06C0C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.NanoCADUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = NanoCAD;
+			};
+			name = Debug;
+		};
+		CA9E542F4E410584CA58E047 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.gakonst.nanocad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0AE2BA94EC600DDEA9604EBC /* Build configuration list for PBXNativeTarget "NanoCAD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CA9E542F4E410584CA58E047 /* Debug */,
+				964C040956046C775CAC30E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		12D81E8976DEAD371E2A6CE9 /* Build configuration list for PBXProject "NanoCAD" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				56549624B233E33C3F2831D3 /* Debug */,
+				169321310CA88DC1BC1FE632 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1753A1EEF0E3BD6B43F0578D /* Build configuration list for PBXNativeTarget "NanoCADUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C2A86B1F320496F1F4E06C0C /* Debug */,
+				B964F6892CADA584ECC815F4 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		F8C58A070C0F7880187E99E3 /* Build configuration list for PBXNativeTarget "NanoCADTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				61AB2EB06051C2037B1AFC35 /* Debug */,
+				B3978CE393EB32F83FFEF633 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 36C6DC0640565E9E36AA5FCD /* Project object */;
+}

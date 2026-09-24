@@ -1,0 +1,49 @@
+{
+  "devicesAndConfigurations" : [
+    {
+      "device" : {
+        "architecture" : "arm64",
+        "deviceId" : "9E567B79-5D7E-496D-B81C-90E102590D8D",
+        "deviceName" : "NanoCAD iPhone",
+        "modelName" : "iPhone 17 Pro",
+        "osBuildNumber" : "23F77",
+        "osVersion" : "26.5",
+        "platform" : "iOS Simulator"
+      },
+      "expectedFailures" : 0,
+      "failedTests" : 1,
+      "passedTests" : 27,
+      "skippedTests" : 0,
+      "testPlanConfiguration" : {
+        "configurationId" : "1",
+        "configurationName" : "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription" : "NanoCAD · Built with macOS 26.3.1",
+  "expectedFailures" : 0,
+  "failedTests" : 1,
+  "finishTime" : 1790283929.308,
+  "passedTests" : 27,
+  "result" : "Failed",
+  "skippedTests" : 0,
+  "startTime" : 1790283750.856,
+  "statistics" : [
+
+  ],
+  "testFailures" : [
+    {
+      "failureText" : "XCTAssertEqual failed: (\"XCTWaiterResult(rawValue: 2)\") is not equal to (\"XCTWaiterResult(rawValue: 1)\") - Expected 12 mm plate, received Optional(12 plate)",
+      "targetName" : "NanoCADUITests",
+      "testIdentifier" : 23,
+      "testIdentifierString" : "NanoCADUITests/testComposerReplacementKeepsNativeCaretInTheMiddleOfTheText()",
+      "testIdentifierURL" : "test://com.apple.xcode/NanoCAD/NanoCADUITests/NanoCADUITests/testComposerReplacementKeepsNativeCaretInTheMiddleOfTheText",
+      "testName" : "testComposerReplacementKeepsNativeCaretInTheMiddleOfTheText()"
+    }
+  ],
+  "title" : "Test - NanoCAD",
+  "topInsights" : [
+
+  ],
+  "totalTestCount" : 28
+}

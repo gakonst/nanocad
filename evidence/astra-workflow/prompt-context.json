@@ -1,0 +1,101 @@
+{
+  "prompt": "Enlarge only the selected through hole to 6 mm diameter. Preserve all other dimensions.",
+  "references": [
+    "model.step#o1.f11"
+  ],
+  "revision": "3b32d876b925b81e2a112b2805d42dd7e050e4a417d064bca85cb76c5d40b830",
+  "input_step": "revision-1/model.step",
+  "selection_before_edit": {
+    "ref": "#o1.f11",
+    "radius_mm": 2.0,
+    "axis_origin_mm": [
+      6.0,
+      6.0,
+      -1.0
+    ],
+    "angular_span_radians": 6.28318530718
+  },
+  "scene_cylinders": [
+    {
+      "ref": "#o1.f3",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        2.0,
+        2.0,
+        0.0
+      ],
+      "angular_span_radians": 1.57079632679531
+    },
+    {
+      "ref": "#o1.f4",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        2.0,
+        38.0,
+        0.0
+      ],
+      "angular_span_radians": 1.5707963267951026
+    },
+    {
+      "ref": "#o1.f8",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        58.0,
+        2.0,
+        0.0
+      ],
+      "angular_span_radians": 1.5707963267953104
+    },
+    {
+      "ref": "#o1.f9",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        58.0,
+        38.0,
+        0.0
+      ],
+      "angular_span_radians": 1.5707963267951035
+    },
+    {
+      "ref": "#o1.f11",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        6.0,
+        6.0,
+        -1.0
+      ],
+      "angular_span_radians": 6.28318530718
+    },
+    {
+      "ref": "#o1.f12",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        54.0,
+        6.0,
+        -1.0
+      ],
+      "angular_span_radians": 6.28318530718
+    },
+    {
+      "ref": "#o1.f13",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        6.0,
+        34.0,
+        -1.0
+      ],
+      "angular_span_radians": 6.28318530718
+    },
+    {
+      "ref": "#o1.f14",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        54.0,
+        34.0,
+        -1.0
+      ],
+      "angular_span_radians": 6.28318530718
+    }
+  ],
+  "scope": "Astra model/tool smoke test; no authenticated application or live account API exercised."
+}

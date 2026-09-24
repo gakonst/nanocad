@@ -1,0 +1,22 @@
+{
+  "testCommand": ".cadgen-venv/bin/python Tools/test_export_step.py",
+  "testsPassed": 5,
+  "python": "3.12.5",
+  "packages": {
+    "cadgen": "0.6.6",
+    "build123d": "0.11.1",
+    "cadquery-ocp-novtk": "7.9.3.1.1"
+  },
+  "step": "/Users/georgios/Nanocodex/nanocad/Resources/precision-bracket.step",
+  "preview": "/Users/georgios/Nanocodex/nanocad/Resources/precision-bracket.cad.json",
+  "stepSHA256": "ee24cee9abcb47ffe997ee9a9429e681140cc418b26504ff7eeeede7b45b1384",
+  "previewSHA256": "7abbb80c4e8684dea5120dee254ed9267afe297409a2013c4f3fda8a2aeeb2e3",
+  "previewBytes": 96084,
+  "faces": 11,
+  "edges": 27,
+  "vertices": 18,
+  "triangles": 1040,
+  "name": "precision-bracket.step",
+  "idExample": "o1.f1",
+  "visualReview": "evidence/precision-bracket-export.png (independent mesh renderer, not SceneKit)"
+}

@@ -1,0 +1,2 @@
+# cadgen supplies build123d>=0.11.1,<0.12 and cadquery-ocp-novtk>=7.9,<8.
+cadgen==0.6.6

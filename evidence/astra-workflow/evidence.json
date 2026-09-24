@@ -1,0 +1,385 @@
+{
+  "scope": "Astra model/tool smoke test; no authenticated application or live account API exercised.",
+  "coordinate_assumptions": "Origin at lower-left bottom; bounds [0,0,0] to [60,40,5] mm. Hole centers are 6 mm from adjacent straight edges. Fillets apply to four outer vertical edges.",
+  "prompt_context": {
+    "prompt": "Enlarge only the selected through hole to 6 mm diameter. Preserve all other dimensions.",
+    "references": [
+      "model.step#o1.f11"
+    ],
+    "revision": "3b32d876b925b81e2a112b2805d42dd7e050e4a417d064bca85cb76c5d40b830",
+    "input_step": "revision-1/model.step",
+    "selection_before_edit": {
+      "ref": "#o1.f11",
+      "radius_mm": 2.0,
+      "axis_origin_mm": [
+        6.0,
+        6.0,
+        -1.0
+      ],
+      "angular_span_radians": 6.28318530718
+    },
+    "scene_cylinders": [
+      {
+        "ref": "#o1.f3",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          2.0,
+          2.0,
+          0.0
+        ],
+        "angular_span_radians": 1.57079632679531
+      },
+      {
+        "ref": "#o1.f4",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          2.0,
+          38.0,
+          0.0
+        ],
+        "angular_span_radians": 1.5707963267951026
+      },
+      {
+        "ref": "#o1.f8",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          58.0,
+          2.0,
+          0.0
+        ],
+        "angular_span_radians": 1.5707963267953104
+      },
+      {
+        "ref": "#o1.f9",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          58.0,
+          38.0,
+          0.0
+        ],
+        "angular_span_radians": 1.5707963267951035
+      },
+      {
+        "ref": "#o1.f11",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          6.0,
+          6.0,
+          -1.0
+        ],
+        "angular_span_radians": 6.28318530718
+      },
+      {
+        "ref": "#o1.f12",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          54.0,
+          6.0,
+          -1.0
+        ],
+        "angular_span_radians": 6.28318530718
+      },
+      {
+        "ref": "#o1.f13",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          6.0,
+          34.0,
+          -1.0
+        ],
+        "angular_span_radians": 6.28318530718
+      },
+      {
+        "ref": "#o1.f14",
+        "radius_mm": 2.0,
+        "axis_origin_mm": [
+          54.0,
+          34.0,
+          -1.0
+        ],
+        "angular_span_radians": 6.28318530718
+      }
+    ],
+    "scope": "Astra model/tool smoke test; no authenticated application or live account API exercised."
+  },
+  "revisions": [
+    {
+      "revision": 1,
+      "sha256": "3b32d876b925b81e2a112b2805d42dd7e050e4a417d064bca85cb76c5d40b830",
+      "volume_mm3": 11731.504440784634,
+      "expected_volume_mm3": 11731.504440784613,
+      "bounds_mm": [
+        [
+          -4.440892098501e-16,
+          -4.440892098501e-16,
+          0.0
+        ],
+        [
+          60.0,
+          40.0,
+          5.0
+        ]
+      ],
+      "holes": [
+        {
+          "ref": "#o1.f11",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            6.0,
+            6.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f12",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            54.0,
+            6.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f13",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            6.0,
+            34.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f14",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            54.0,
+            34.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        }
+      ],
+      "fillets": [
+        {
+          "ref": "#o1.f3",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            2.0,
+            2.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f4",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            2.0,
+            38.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f8",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            58.0,
+            2.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f9",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            58.0,
+            38.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        }
+      ],
+      "faces": 14,
+      "triangles": 1708,
+      "checks": {
+        "valid_single_solid": true,
+        "bounds_60_40_5": true,
+        "analytic_volume": true,
+        "four_hole_centers": true,
+        "hole_radii": true,
+        "through_holes": true,
+        "four_2mm_corner_fillets": true,
+        "digest": true,
+        "all_refs_resolve": true,
+        "face_ref_set": true,
+        "preview_areas_match": true,
+        "preview_contract_valid": true,
+        "mesh_bounds_match_step": true
+      }
+    },
+    {
+      "revision": 2,
+      "sha256": "82820d59e7c435a7b8bb0c7c20f7f51c37eef4ce99ac6565a006280e20e797d1",
+      "volume_mm3": 11652.96462444493,
+      "expected_volume_mm3": 11652.964624444867,
+      "bounds_mm": [
+        [
+          -4.440892098501e-16,
+          -4.440892098501e-16,
+          0.0
+        ],
+        [
+          60.0,
+          40.0,
+          5.0
+        ]
+      ],
+      "holes": [
+        {
+          "ref": "#o1.f11",
+          "radius_mm": 3.0,
+          "center_xy_mm": [
+            6.0,
+            6.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f12",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            54.0,
+            6.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f13",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            6.0,
+            34.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f14",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            54.0,
+            34.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        }
+      ],
+      "fillets": [
+        {
+          "ref": "#o1.f3",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            2.0,
+            2.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f5",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            2.0,
+            38.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f8",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            58.0,
+            2.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        },
+        {
+          "ref": "#o1.f9",
+          "radius_mm": 2.0,
+          "center_xy_mm": [
+            58.0,
+            38.0
+          ],
+          "z_bounds_mm": [
+            0.0,
+            5.0
+          ]
+        }
+      ],
+      "faces": 14,
+      "triangles": 1708,
+      "checks": {
+        "valid_single_solid": true,
+        "bounds_60_40_5": true,
+        "analytic_volume": true,
+        "four_hole_centers": true,
+        "hole_radii": true,
+        "through_holes": true,
+        "four_2mm_corner_fillets": true,
+        "digest": true,
+        "all_refs_resolve": true,
+        "face_ref_set": true,
+        "preview_areas_match": true,
+        "preview_contract_valid": true,
+        "mesh_bounds_match_step": true,
+        "selected_hole_only": true
+      }
+    }
+  ],
+  "cross_revision_checks": {
+    "bounds_unchanged": true,
+    "revision_changed": true,
+    "volume_decrease_25pi": true,
+    "no_material_added": true
+  },
+  "all_checks_pass": true
+}
