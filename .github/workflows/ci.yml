@@ -27,8 +27,8 @@ jobs:
           cache: pip
           cache-dependency-path: Tools/requirements.txt
       - run: pip install -r Tools/requirements.txt
-      - run: python Tools/test_export_step.py
-      - run: cmp Tools/export_step.py Resources/export_step.py
+      - run: python Tools/test_export_step.py && python Tools/test_cad_project.py
+      - run: cmp Tools/export_step.py Resources/export_step.py && cmp Tools/cad_project.py Resources/cad_project.py
   ios:
     runs-on: macos-26
     steps:

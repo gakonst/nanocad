@@ -9,6 +9,7 @@ protocol GenerationClient: Sendable {
     func createAgent(requestID: String, inputFiles: [NanocodexInputFile], instructions: String) async throws -> String
     func send(agentID: String, prompt: String, references: [String], revision: String?, requestID: String, turnID: String) async throws -> NanocodexTurnReceipt
     func events(agentID: String, after: String, untilTurnID: String?, receive: @escaping @Sendable (NanocodexEvent) async -> Void) async throws
+    func checkpoint(agentID: String, turnID: String, after: Int) async throws -> CADCheckpoint?
     func cancel(agentID: String, turnID: String) async throws
     func artifacts(agentID: String, turnID: String?) async throws -> NanocodexArtifactPage
     func download(agentID: String, artifact: NanocodexArtifact) async throws -> URL
@@ -16,6 +17,7 @@ protocol GenerationClient: Sendable {
     func close()
 }
 extension GenerationClient {
+    func checkpoint(agentID: String, turnID: String, after: Int) async throws -> CADCheckpoint? { nil }
     func prepare(_ generation: PendingGeneration) async throws {}
     func localResult(agentID: String, turnID: String) async throws -> (preview: Data, step: Data)? { nil }
 }
@@ -49,6 +51,8 @@ final class GenerationController {
     var response = ""
     var error: String?
     var pending: PendingGeneration?
+    private(set) var livePreview: LiveCADPreview?
+    var previewRevision: Int { livePreview?.revision ?? 0 }
     var onResult: ((Data, Data) throws -> Void)?
     private var history = GenerationTranscript()
     private var transcriptLoadError: String?
@@ -110,6 +114,11 @@ final class GenerationController {
                         if !pending.response.isEmpty { history.recordStatus(pending.response, turnID: pending.turnID) }
                     }
                 }
+                if let pending, pending.phase != "failed", pending.transport == "cloud",
+                   let data = try? Data(contentsOf: self.root.appending(path: "checkpoint.json")), data.count <= 2_800_000,
+                   let checkpoint = try? JSONDecoder().decode(CADCheckpoint.self, from: data) {
+                    livePreview = try? checkpoint.validated(for: pending.turnID)
+                }
                 status = pending?.stopRequested == true ? "Stop unconfirmed · Tap to retry" : pending?.phase == "failed" ? "Generation failed" : observationPausedStatus
             } catch { self.error = "The saved generation could not be restored." }
         }
@@ -125,6 +134,7 @@ final class GenerationController {
             }
             guard let exporter = Bundle.main.url(forResource: "export_step", withExtension: "py") else { throw NanocodexError.publication("The CAD exporter is missing from this build.") }
             var files = [PendingGeneration.File(path: "/brain/tools/export_step.py", data: try Data(contentsOf: exporter))]
+            files += try CADAgentProfile.inputs()
             if let step { files.append(.init(path: "/brain/input/model.step", data: step)) }
             if let markup { files.append(.init(path: "/brain/input/markup.jpg", data: markup)) }
             // The cloud input is named model.step; cadgen resolves refs by that filename.
@@ -133,11 +143,12 @@ final class GenerationController {
             let references = inputDocument?.promptReferences(selectedReferences) ?? []
             let revision = step.map(Self.digest)
             let instructions = """
-            NanoCAD ships its real STEP-to-preview exporter at /brain/tools/export_step.py. Use it; do not synthesize preview JSON. Mount provider cf_sandbox. Use its preinstalled uv to install Python 3.12 and cadgen==0.6.6 in a container-local /opt/nanocad environment (avoid putting dependencies on the /brain or /workspace FUSE mount), and run python /brain/tools/export_step.py /brain/outputs/model.step --out /brain/outputs/model.cad.json. The native hand can access /brain. If its namespace cannot, transfer only these task inputs using available file tools. Use build123d for real CAD modeling, then export the saved STEP before the preview. The exporter uses cadgen's exact topology references.
+            NanoCAD ships its real STEP-to-preview exporter at /brain/tools/export_step.py. Use it; do not synthesize preview JSON. Mount provider cf_sandbox. Reuse its /opt/nanocad/venv interpreter when compatible; otherwise use preinstalled uv to install Python 3.12 and cadgen[snapshot]==0.6.6 in a container-local /opt/nanocad environment (avoid putting dependencies on the /brain or /workspace FUSE mount), and run python /brain/tools/export_step.py /brain/outputs/model.step --out /brain/outputs/model.cad.json. The native hand can access /brain. If its namespace cannot, transfer only these task inputs using available file tools. Use build123d for real CAD modeling, then export the saved STEP before the preview. The exporter uses cadgen's exact topology references.
             \(step != nil ? "The current document is /brain/input/model.step. Any selected reference filename refers to those exact bytes, originally named \(document?.name ?? "imported.step"). Its exact SHA-256 revision is \(revision ?? ""). Verify it before resolving model.step references with cadgen.read_scene. Preserve dimensions not requested to change." : "Create a new CAD model from the user's brief; use millimeters and record any dimensional assumptions.")
             \(markup != nil ? "An annotated viewport image is at /brain/input/markup.jpg. Open it with view_image and use its marks as visual context for the user's request." : "")
             \(importing ? "This is an import for viewing: preserve the original STEP bytes by copying /brain/input/model.step to /brain/outputs/model.step; export only the preview. Do not modify the geometry." : "Check the resulting saved STEP is valid with positive volume where a solid was requested. Export the final STEP and JSON only when checks pass.")
             Write a concise completion explaining the actual model change and dimensions. Both output files must exist at the specified paths.
+            \(CADAgentProfile.instructions)
             """
             pending = PendingGeneration(prompt: prompt, references: references, revision: revision, files: files, instructions: instructions, origin: credentials?.origin)
             if let pending { history.recordUser(safeTranscriptText(prompt), turnID: pending.turnID) }
@@ -231,9 +242,14 @@ final class GenerationController {
                 try Task.checkCancellation()
                 if current.phase == "running" {
                     status = "Working on your model…"
+                    let previewTask = Task { [weak self] in
+                        await self?.observePreviews(client: client, agentID: agentID, turnID: current.turnID)
+                    }
+                    defer { previewTask.cancel() }
                     try await client.events(agentID: agentID, after: current.cursor, untilTurnID: current.turnID) { [weak self] event in
                         await self?.receive(event)
                     }
+                    previewTask.cancel()
                 }
                 try Task.checkCancellation()
                 guard pending?.phase == "downloading" else {
@@ -252,6 +268,7 @@ final class GenerationController {
             } catch {
                 if case NanocodexError.missingCADOutput = error {
                     pending?.phase = "failed"
+                    livePreview = nil
                     try? persist()
                 }
                 if Task.isCancelled || error is CancellationError {
@@ -264,6 +281,30 @@ final class GenerationController {
                     }
                     status = stopping ? "Stop unconfirmed · Tap to retry" : pending?.phase == "failed" ? "Generation failed" : "Needs attention · Tap to resume"
                 }
+            }
+        }
+    }
+
+    private func observePreviews(client: any GenerationClient, agentID: String, turnID: String) async {
+        guard pending?.transport == "cloud" else { return }
+        while !Task.isCancelled, pending?.turnID == turnID, pending?.phase == "running", pending?.stopRequested != true {
+            do {
+                if let checkpoint = try await client.checkpoint(agentID: agentID, turnID: turnID, after: previewRevision) {
+                    try Task.checkCancellation()
+                    guard pending?.turnID == turnID, pending?.phase == "running", pending?.stopRequested != true else { return }
+                    if checkpoint.revision <= previewRevision {
+                        try await Task.sleep(for: .seconds(2)); continue
+                    }
+                    let verified = try checkpoint.validated(for: turnID)
+                    try JSONEncoder().encode(checkpoint).write(to: root.appending(path: "checkpoint.json"),
+                        options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+                    livePreview = verified
+                }
+                try await Task.sleep(for: .seconds(2))
+            } catch {
+                if Task.isCancelled || error is CancellationError { return }
+                // A preview is optional. A transient/torn checkpoint never ends the turn.
+                do { try await Task.sleep(for: .seconds(3)) } catch { return }
             }
         }
     }
@@ -289,6 +330,7 @@ final class GenerationController {
             case "turn_failed", "turn_cancelled":
                 response = event.text.isEmpty ? "The generation was stopped or failed." : safeTranscriptText(event.text)
                 current.phase = "failed"
+                livePreview = nil
             default: break
             }
         }
@@ -363,6 +405,8 @@ final class GenerationController {
         let url = root.appending(path: "generation.json")
         if FileManager.default.fileExists(atPath: url.path) { try FileManager.default.removeItem(at: url) }
         pending = nil
+        livePreview = nil
+        try? FileManager.default.removeItem(at: root.appending(path: "checkpoint.json"))
     }
     private func persistTranscript() throws {
         // Never replace an unreadable transcript with a fresh, misleadingly complete history.

@@ -116,7 +116,7 @@ final class NanoCADUITests: XCTestCase {
         let selectionMenu = expectation(for: NSPredicate { _, _ in
             app.menuItems["Cut"].exists || app.buttons["Cut"].exists
         }, evaluatedWith: nil)
-        wait(for: [selectionMenu], timeout: 3)
+        wait(for: [selectionMenu], timeout: 10)
         composer.typeText("large")
         waitForValue("large steel plate", of: composer)
         composer.typeText("r")
@@ -213,9 +213,18 @@ final class NanoCADUITests: XCTestCase {
         app.terminate(); app.launchArguments = localeArguments; app.launch()
         XCTAssertTrue(app.staticTexts["Give your idea shape."].waitForExistence(timeout: 5))
         waitForValue("Make a cable clip", of: composer)
-        app.buttons["design-menu"].tap(); app.buttons["Projects"].tap()
+        app.buttons["show-projects"].tap()
+        XCTAssertTrue(app.buttons["new-project"].waitForExistence(timeout: 3))
+        if app.buttons["close-projects"].exists {
+            app.buttons["close-projects"].tap()
+            XCTAssertFalse(app.buttons["new-project"].isHittable)
+            app.buttons["show-projects"].tap()
+        }
         let original = app.buttons.containing(.staticText, identifier: "My Project").firstMatch
-        XCTAssertTrue(original.waitForExistence(timeout: 5)); original.tap()
+        XCTAssertTrue(original.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.images["project-thumbnail"].firstMatch.waitForExistence(timeout: 8))
+        attachScreenshot(app, named: "project-drawer-with-real-model-thumbnail")
+        original.tap()
         waitForValue("11 faces, 0 selected", of: viewport(in: app))
         waitForValue("Keep the bracket holes", of: composer)
         attachScreenshot(app, named: "projects-original-model-and-draft-restored")

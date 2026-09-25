@@ -66,7 +66,21 @@ struct CADViewport: UIViewRepresentable {
     var mode: ViewportMode
     @Binding var selection: Set<String>
     var resetToken: Int = 0
+    var preservesCamera = false
     var controller: ViewportController? = nil
+
+    @MainActor static func thumbnail(document: CADDocument) -> UIImage {
+        let parent = CADViewport(document: document, mode: .orbit, selection: .constant([]))
+        let coordinator = Coordinator(parent)
+        let view = CADSceneView(frame: CGRect(x: 0, y: 0, width: 240, height: 200))
+        coordinator.install(in: view)
+        coordinator.update(parent)
+        view.layoutIfNeeded()
+        coordinator.fitToModel()
+        let image = view.snapshot()
+        view.onLayout = nil; view.scene = nil; coordinator.view = nil
+        return image
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(self) }
 
@@ -209,9 +223,11 @@ struct CADViewport: UIViewRepresentable {
             self.parent = parent
             let changedDocument = loadedRevision != parent.document.revision || loadedName != parent.document.name
             if changedDocument {
+                let preservedCamera = parent.preservesCamera && loadedRevision != nil ? captureCamera() : nil
                 loadedRevision = parent.document.revision
                 loadedName = parent.document.name
                 rebuildModel(parent.document)
+                if let preservedCamera { restoreCamera(preservedCamera) }
             }
             let changedMode = lastMode != parent.mode
             if changedMode {

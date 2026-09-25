@@ -9,6 +9,7 @@ The mesh uses OCCT (not CAD Viewer's JavaScript tessellator).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -143,16 +144,54 @@ def write_document(document: dict, output: Path) -> None:
     temporary.replace(output)
 
 
+def write_checkpoint(step: Path, document: dict, root: Path, revision: int) -> None:
+    """Publish immutable revision files, then the pointer consumed by the phone."""
+    if revision < 1 or revision > 9007199254740991:
+        raise ValueError("Checkpoint revision must be a positive safe integer")
+    step_bytes = step.read_bytes()
+    if hashlib.sha256(step_bytes).hexdigest() != document["revision"]:
+        raise ValueError("STEP changed while exporting checkpoint")
+    preview = dict(document, name="model.step")
+    preview_bytes = (json.dumps(preview, separators=(",", ":"), allow_nan=False) + "\n").encode()
+    contents = {"model.step": step_bytes, "model.cad.json": preview_bytes}
+    if any(len(value) > 1_000_000 for value in contents.values()):
+        raise ValueError("Checkpoint files must each stay below 1 MB")
+    root.mkdir(parents=True, exist_ok=True)
+    latest = root / "latest.json"
+    if latest.exists() and json.loads(latest.read_text())["revision"] > revision:
+        raise ValueError("Checkpoint revisions must increase")
+    directory = root / f"r{revision}"
+    directory.mkdir(exist_ok=True)
+    files = []
+    for name, data in contents.items():
+        target = directory / name
+        if target.exists() and target.read_bytes() != data:
+            raise ValueError("An existing checkpoint revision cannot be changed")
+        if not target.exists():
+            with tempfile.NamedTemporaryFile(dir=directory, delete=False) as stream:
+                stream.write(data)
+                temporary = Path(stream.name)
+            temporary.replace(target)
+        files.append({"path": f"r{revision}/{name}", "sha256": hashlib.sha256(data).hexdigest(), "size": len(data)})
+    write_document({"revision": revision, "files": files}, latest)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("step", type=Path)
     parser.add_argument("--out", type=Path, help="Default: INPUT basename with .cad.json suffix")
     parser.add_argument("--tolerance-mm", type=float, default=0.08)
     parser.add_argument("--angle-radians", type=float, default=0.15)
+    parser.add_argument("--checkpoint-dir", type=Path, help="Publish a live STEP/preview revision to this directory")
+    parser.add_argument("--checkpoint-revision", type=int, help="Increasing revision number within this request")
     args = parser.parse_args()
+    if (args.checkpoint_dir is None) != (args.checkpoint_revision is None):
+        parser.error("--checkpoint-dir and --checkpoint-revision must be supplied together")
     result = export_document(args.step, tolerance_mm=args.tolerance_mm, angle_radians=args.angle_radians)
     output = args.out or args.step.with_suffix(".cad.json")
     write_document(result, output)
+    if args.checkpoint_dir is not None:
+        write_checkpoint(args.step, result, args.checkpoint_dir, args.checkpoint_revision)
     print(json.dumps({"output": str(output.resolve()), "revision": result["revision"],
                       "faces": len(result["faces"]), "edges": len(result["edges"]),
                       "vertices": len(result["vertices"]), "parts": len(result["parts"]),

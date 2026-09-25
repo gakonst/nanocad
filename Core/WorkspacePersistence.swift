@@ -53,6 +53,7 @@ struct WorkspacePersistence {
             try? FileManager.default.removeItem(at: directory)
             throw error
         }
+        NotificationCenter.default.post(name: .nanocadDocumentSaved, object: root)
         return doc
     }
     func loadDocument() throws -> CADDocument? {
@@ -96,3 +97,5 @@ struct WorkspacePersistence {
         }
     }
 }
+
+extension Notification.Name { static let nanocadDocumentSaved = Notification.Name("NanoCAD.documentSaved") }

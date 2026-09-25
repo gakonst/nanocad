@@ -8,7 +8,7 @@ import unittest
 
 import build123d as bd
 from cadgen import read_scene
-from export_step import export_document, validate_document
+from export_step import export_document, validate_document, write_checkpoint
 
 ROOT = Path(__file__).resolve().parent.parent
 # Exact STEP metrics tolerate kernel floating-point roundoff. Sampled geometry
@@ -28,6 +28,29 @@ class ExportTests(unittest.TestCase):
         cls.scene = read_scene(cls.sample)
         cls.document = export_document(cls.sample)
         cls.bundled = json.loads(cls.sample.with_suffix(".cad.json").read_text())
+
+    def test_checkpoint_publishes_coherent_pair_and_preserves_last_good_on_failure(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            write_checkpoint(self.sample, self.document, root, 1)
+            original = (root / "latest.json").read_bytes()
+            manifest = json.loads(original)
+            for file in manifest["files"]:
+                data = (root / file["path"]).read_bytes()
+                self.assertEqual(hashlib.sha256(data).hexdigest(), file["sha256"])
+                self.assertEqual(len(data), file["size"])
+            preview = json.loads((root / "r1/model.cad.json").read_text())
+            self.assertEqual(preview["name"], "model.step")
+            self.assertEqual(preview["revision"], hashlib.sha256((root / "r1/model.step").read_bytes()).hexdigest())
+            changed_step = root / "changed.step"
+            changed_step.write_bytes(self.sample.read_bytes() + b"\n")
+            with self.assertRaises(ValueError):
+                write_checkpoint(changed_step, self.document, root, 2)
+            self.assertEqual((root / "latest.json").read_bytes(), original)
+            write_checkpoint(self.sample, self.document, root, 2)
+            with self.assertRaises(ValueError):
+                write_checkpoint(self.sample, self.document, root, 1)
+            self.assertEqual(json.loads((root / "latest.json").read_text())["revision"], 2)
 
     def assert_sampled_bounds(self, points, shape, reference):
         bounds = shape.bounding_box()

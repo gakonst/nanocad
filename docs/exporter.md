@@ -79,4 +79,16 @@ Executed successfully on macOS/Python 3.12.5 with cadgen 0.6.6, build123d 0.11.1
 
 Cadgen/text-to-cad is MIT, copyright 2026 Thompson Labs LLC (`packages/cadgen/LICENSE`). [build123d](https://github.com/gumyr/build123d/blob/dev/NOTICE) and [OCP bindings](https://github.com/CadQuery/OCP/blob/master/LICENSE) are Apache-2.0 (also confirmed in installed package metadata). The native OCCT kernel has [LGPL-2.1](https://github.com/Open-Cascade-SAS/OCCT/blob/master/LICENSE_LGPL_21.txt) plus its [additional exception](https://github.com/Open-Cascade-SAS/OCCT/blob/master/OCCT_LGPL_EXCEPTION.txt). Keep upstream notices when distributing copied code/dependencies; generated STEP/JSON are ordinary output artifacts.
 
-Validation: six integration tests cover exact digest/reference resolution and STEP metrics, sampled face/edge bounds, triangle winding/unit normals/positive approximate volume, repeated instance placements, sphere pole degeneracies, and exact warm-export equality on the same runtime. The bundled preview is checked against canonical STEP topology and geometry rather than platform-dependent tessellation ordering. Both fresh and bundled meshes must pass normals, winding, per-face area and signed-volume checks. Exact area/length/vertex coordinates allow 1e-7 numerical roundoff; sampled bounds allow the exporter's 0.08 mm deflection plus roundoff, and sampled area/length/volume allow 1% error. No upstream files were changed. Native app rendering and screenshot tests are separate.
+Validation: seven integration tests cover exact digest/reference resolution and STEP metrics, sampled face/edge bounds, triangle winding/unit normals/positive approximate volume, repeated instance placements, sphere pole degeneracies, and exact warm-export equality on the same runtime. The bundled preview is checked against canonical STEP topology and geometry rather than platform-dependent tessellation ordering. Both fresh and bundled meshes must pass normals, winding, per-face area and signed-volume checks. Exact area/length/vertex coordinates allow 1e-7 numerical roundoff; sampled bounds allow the exporter's 0.08 mm deflection plus roundoff, and sampled area/length/volume allow 1% error. No upstream files were changed. Native app rendering and screenshot tests are separate.
+
+## Intermediate native previews
+
+Append `--checkpoint-dir <turn-output>/checkpoints --checkpoint-revision 1` to the
+usual export command. The exporter saves `r1/model.step` and `r1/model.cad.json`,
+verifies their shared source revision, and atomically publishes `latest.json` last.
+Increase the revision for each meaningful valid shape. An existing revision cannot
+be rewritten with different bytes, and revision numbers cannot move backwards.
+Checkpoint files have the same 1 MB limit as final artifacts. The app polls a
+scoped Connect checkpoint endpoint and keeps previews separate from its committed
+model. Continue writing the final `model.step` and `model.cad.json` at the requested
+output root: an intermediate checkpoint is never a completion receipt.

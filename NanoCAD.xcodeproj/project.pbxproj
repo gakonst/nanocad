@@ -12,10 +12,12 @@
 		10C8DA090DDEF64CEE3E6B3E /* precision-bracket.cad.json in Resources */ = {isa = PBXBuildFile; fileRef = 0EDAF6BA0BBF5DAF75EECE13 /* precision-bracket.cad.json */; };
 		1989294B022140BC6B694B44 /* NanocodexClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B4C38BCBDC0E403D1DF354A5 /* NanocodexClient.swift */; };
 		1AE3C2946842C9AA51BB9B7C /* ConnectCADClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8782D115AE75399AF51CE16D /* ConnectCADClient.swift */; };
+		1CDF9FCF0EE4C5332C61F6F9 /* CADCheckpointTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07295B718AA1238708E853A /* CADCheckpointTests.swift */; };
 		2260A602D855D2FA556CBBEA /* ConnectionCredentials.swift in Sources */ = {isa = PBXBuildFile; fileRef = 029E20FA55FAA4368D3EB7C3 /* ConnectionCredentials.swift */; };
 		25B0A414353ADD8C73E410E2 /* ConnectWebViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 666691E37B8CA97B1274CAC3 /* ConnectWebViewTests.swift */; };
 		2941A933E083FD659C540BFB /* ConnectDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = FACD720B732B4F88B6C81462 /* ConnectDiagnostics.swift */; };
 		2D08B88B2F38C50F0C070A50 /* WorkspaceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */; };
+		3BC4B80EBA9C9A612D1DBAB0 /* CADAgentProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = D47015027F386577B906A42F /* CADAgentProfile.swift */; };
 		43CB1E1DA15F39B2910926A1 /* ChatComposerEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30A4599485301079F156374F /* ChatComposerEditor.swift */; };
 		4567C1C762DECC8C526A9078 /* NanoCADApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07E8CDCD3183E7CAFCC43D38 /* NanoCADApp.swift */; };
 		47C7414779794B9804306038 /* ConnectAuthorization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A61D35BB4FE4C4D7F29A992 /* ConnectAuthorization.swift */; };
@@ -28,6 +30,7 @@
 		8173938961AC520BF1E8A72A /* DrawingCanvas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11123346C198E661CEFE7292 /* DrawingCanvas.swift */; };
 		85C09ABFC283958BF0F90372 /* CADDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 138A64FFA48B62FF983E7835 /* CADDocument.swift */; };
 		8639560EB61402E4545C2376 /* GenerationTranscript.swift in Sources */ = {isa = PBXBuildFile; fileRef = 853F4D4DA4078D2880DE392A /* GenerationTranscript.swift */; };
+		8F8F1CA6964124B475341DB8 /* cad_project.py in Resources */ = {isa = PBXBuildFile; fileRef = 666621DB5743870AE1D1BBF4 /* cad_project.py */; };
 		94FA3F9CA432DB071D0B2B2A /* precision-bracket.step in Resources */ = {isa = PBXBuildFile; fileRef = 5F71F697C3BF4FC87798555A /* precision-bracket.step */; };
 		99BD710FC458257A63A54A87 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 324A51CF0961CC262289DB87 /* Assets.xcassets */; };
 		A6C6984EBC37E44B5BD6DF59 /* export_step.py in Resources */ = {isa = PBXBuildFile; fileRef = CC4A79A93CB246A0EDBAFBEE /* export_step.py */; };
@@ -39,12 +42,15 @@
 		BBF598FC6CD0ADC175FF5C9F /* CADProjectStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 652BDEE78EE1456282205901 /* CADProjectStoreTests.swift */; };
 		CC07F418C288BF84257C696B /* NanocodexHTTPTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 95219125BBA18E22AD34CCDB /* NanocodexHTTPTests.swift */; };
 		CC3F04980EE1BB615CF84057 /* CADDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */; };
+		D32156680FC3257FAF01BFE1 /* ProjectThumbnailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D936DDAD21AD75BAF74A4C0 /* ProjectThumbnailView.swift */; };
 		D397B91280C2CF00EA9E3D58 /* GenerationController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D97367F0CD167253143D782 /* GenerationController.swift */; };
 		D6CE60B6173D7C60DE5843D2 /* WorkspacePersistence.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94368EEEF6866856072AEE1E /* WorkspacePersistence.swift */; };
 		D9372E363178E0E4BB62BADE /* ConnectToolHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19763923E5A0C68F8864937B /* ConnectToolHost.swift */; };
 		D963A0373E627184DE459E91 /* CADProjectStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7174F46CEC338E13861AAF85 /* CADProjectStore.swift */; };
 		DB938D7423B49C51D2969B9E /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B922275758EA7D13C91E3992 /* ProjectsView.swift */; };
 		E95713A6EB3FABD634BA7EF5 /* DurableConnectCADClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F77D27838E662267AD517D32 /* DurableConnectCADClient.swift */; };
+		EA098D8B5A5B1D7F4AC29E78 /* cad-skill.json in Resources */ = {isa = PBXBuildFile; fileRef = 0F77AAC1736FB02B5F31A78E /* cad-skill.json */; };
+		EE3EBC4EF510BDBB295144DB /* CADCheckpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 011F6F5C4DB5A6AE64B4D081 /* CADCheckpoint.swift */; };
 		F050ECB6DA3E4CE04070CE46 /* NanocodexClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0904AF200B5F52E1A2D4961 /* NanocodexClientTests.swift */; };
 /* End PBXBuildFile section */
 
@@ -66,6 +72,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		011F6F5C4DB5A6AE64B4D081 /* CADCheckpoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADCheckpoint.swift; sourceTree = "<group>"; };
 		026753ABBAF0E754CECA658C /* GenerationActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationActivityView.swift; sourceTree = "<group>"; };
 		029E20FA55FAA4368D3EB7C3 /* ConnectionCredentials.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionCredentials.swift; sourceTree = "<group>"; };
 		0525A40F1E757A3EE7BBCD7F /* NanoCADTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NanoCADTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -73,6 +80,7 @@
 		080236ED0BB5DA49D710BFA0 /* GenerationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationTests.swift; sourceTree = "<group>"; };
 		085E12DC5FA964073D36BF0F /* CADComposer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADComposer.swift; sourceTree = "<group>"; };
 		0EDAF6BA0BBF5DAF75EECE13 /* precision-bracket.cad.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "precision-bracket.cad.json"; sourceTree = "<group>"; };
+		0F77AAC1736FB02B5F31A78E /* cad-skill.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "cad-skill.json"; sourceTree = "<group>"; };
 		11123346C198E661CEFE7292 /* DrawingCanvas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawingCanvas.swift; sourceTree = "<group>"; };
 		138A64FFA48B62FF983E7835 /* CADDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocument.swift; sourceTree = "<group>"; };
 		19763923E5A0C68F8864937B /* ConnectToolHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectToolHost.swift; sourceTree = "<group>"; };
@@ -86,7 +94,9 @@
 		5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADDocumentTests.swift; sourceTree = "<group>"; };
 		5F71F697C3BF4FC87798555A /* precision-bracket.step */ = {isa = PBXFileReference; path = "precision-bracket.step"; sourceTree = "<group>"; };
 		652BDEE78EE1456282205901 /* CADProjectStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADProjectStoreTests.swift; sourceTree = "<group>"; };
+		666621DB5743870AE1D1BBF4 /* cad_project.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = cad_project.py; sourceTree = "<group>"; };
 		666691E37B8CA97B1274CAC3 /* ConnectWebViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectWebViewTests.swift; sourceTree = "<group>"; };
+		6D936DDAD21AD75BAF74A4C0 /* ProjectThumbnailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectThumbnailView.swift; sourceTree = "<group>"; };
 		7174F46CEC338E13861AAF85 /* CADProjectStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADProjectStore.swift; sourceTree = "<group>"; };
 		853F4D4DA4078D2880DE392A /* GenerationTranscript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GenerationTranscript.swift; sourceTree = "<group>"; };
 		85A8CCCC0470380A20133D84 /* NanoCADUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = NanoCADUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,9 +108,11 @@
 		B0904AF200B5F52E1A2D4961 /* NanocodexClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanocodexClientTests.swift; sourceTree = "<group>"; };
 		B4C38BCBDC0E403D1DF354A5 /* NanocodexClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NanocodexClient.swift; sourceTree = "<group>"; };
 		B922275758EA7D13C91E3992 /* ProjectsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsView.swift; sourceTree = "<group>"; };
+		C07295B718AA1238708E853A /* CADCheckpointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADCheckpointTests.swift; sourceTree = "<group>"; };
 		C8209FB24FFC4788E3CBF952 /* connect.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = connect.js; sourceTree = "<group>"; };
 		CC4A79A93CB246A0EDBAFBEE /* export_step.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = export_step.py; sourceTree = "<group>"; };
 		CF1B4AC8BB0A7D1B6AC4127E /* NanoCAD.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = NanoCAD.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D47015027F386577B906A42F /* CADAgentProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CADAgentProfile.swift; sourceTree = "<group>"; };
 		D56236E5D07578A9BCDFEECB /* ConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectionView.swift; sourceTree = "<group>"; };
 		D8A22268D7F5A58A4BE61DD9 /* connect-tool-catalog.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "connect-tool-catalog.json"; sourceTree = "<group>"; };
 		DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspaceView.swift; sourceTree = "<group>"; };
@@ -115,6 +127,8 @@
 			isa = PBXGroup;
 			children = (
 				324A51CF0961CC262289DB87 /* Assets.xcassets */,
+				666621DB5743870AE1D1BBF4 /* cad_project.py */,
+				0F77AAC1736FB02B5F31A78E /* cad-skill.json */,
 				F8885CC78B3DB4266172338A /* connect-licenses.txt */,
 				D8A22268D7F5A58A4BE61DD9 /* connect-tool-catalog.json */,
 				C8209FB24FFC4788E3CBF952 /* connect.js */,
@@ -140,6 +154,7 @@
 		21D2B42EC80953E74824B184 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
+				C07295B718AA1238708E853A /* CADCheckpointTests.swift */,
 				5EA2917D67FFC659C6F70D42 /* CADDocumentTests.swift */,
 				652BDEE78EE1456282205901 /* CADProjectStoreTests.swift */,
 				3D4EBE0B62881AB6B8798F85 /* ConnectTests.swift */,
@@ -173,6 +188,8 @@
 		C522DA54900ADDF6AADDA259 /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				D47015027F386577B906A42F /* CADAgentProfile.swift */,
+				011F6F5C4DB5A6AE64B4D081 /* CADCheckpoint.swift */,
 				138A64FFA48B62FF983E7835 /* CADDocument.swift */,
 				7174F46CEC338E13861AAF85 /* CADProjectStore.swift */,
 				4A61D35BB4FE4C4D7F29A992 /* ConnectAuthorization.swift */,
@@ -201,6 +218,7 @@
 				026753ABBAF0E754CECA658C /* GenerationActivityView.swift */,
 				07E8CDCD3183E7CAFCC43D38 /* NanoCADApp.swift */,
 				B922275758EA7D13C91E3992 /* ProjectsView.swift */,
+				6D936DDAD21AD75BAF74A4C0 /* ProjectThumbnailView.swift */,
 				8A1D2A232E1F3881E5939156 /* TopologyInspector.swift */,
 				DE3F55523EEA7A7582D32F43 /* WorkspaceView.swift */,
 			);
@@ -312,6 +330,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				99BD710FC458257A63A54A87 /* Assets.xcassets in Resources */,
+				EA098D8B5A5B1D7F4AC29E78 /* cad-skill.json in Resources */,
+				8F8F1CA6964124B475341DB8 /* cad_project.py in Resources */,
 				A8D52B1F7AB3D10037905AB8 /* connect-licenses.txt in Resources */,
 				7C24D0A8E5D507ACDD580787 /* connect-tool-catalog.json in Resources */,
 				B0B2AF5287EB483136CA5FDC /* connect.js in Resources */,
@@ -336,6 +356,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1CDF9FCF0EE4C5332C61F6F9 /* CADCheckpointTests.swift in Sources */,
 				CC3F04980EE1BB615CF84057 /* CADDocumentTests.swift in Sources */,
 				BBF598FC6CD0ADC175FF5C9F /* CADProjectStoreTests.swift in Sources */,
 				70794A214C6C06C87D85EB75 /* ConnectTests.swift in Sources */,
@@ -351,6 +372,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3BC4B80EBA9C9A612D1DBAB0 /* CADAgentProfile.swift in Sources */,
+				EE3EBC4EF510BDBB295144DB /* CADCheckpoint.swift in Sources */,
 				71C3CC25B7A92DD3A2361607 /* CADComposer.swift in Sources */,
 				85C09ABFC283958BF0F90372 /* CADDocument.swift in Sources */,
 				D963A0373E627184DE459E91 /* CADProjectStore.swift in Sources */,
@@ -370,6 +393,7 @@
 				8639560EB61402E4545C2376 /* GenerationTranscript.swift in Sources */,
 				4567C1C762DECC8C526A9078 /* NanoCADApp.swift in Sources */,
 				1989294B022140BC6B694B44 /* NanocodexClient.swift in Sources */,
+				D32156680FC3257FAF01BFE1 /* ProjectThumbnailView.swift in Sources */,
 				DB938D7423B49C51D2969B9E /* ProjectsView.swift in Sources */,
 				5AE8AB46BA033A58B8AEDA43 /* TopologyInspector.swift in Sources */,
 				D6CE60B6173D7C60DE5843D2 /* WorkspacePersistence.swift in Sources */,
@@ -430,7 +454,7 @@
 				"CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]" = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
@@ -451,7 +475,7 @@
 				INFOPLIST_KEY_UIFileSharingEnabled = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -501,7 +525,7 @@
 				"CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]" = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "-";
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -528,7 +552,7 @@
 				INFOPLIST_KEY_UIFileSharingEnabled = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 0.3.0;
+				MARKETING_VERSION = 0.4.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

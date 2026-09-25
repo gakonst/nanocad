@@ -20,10 +20,13 @@ struct WorkspaceView: View {
     @State private var drawing = DrawingController()
     @StateObject private var viewport = ViewportController()
     @State private var drawingCamera: ViewportCameraState?
+    @State private var reviewRevision: String?
+    @State private var cameraResetToken = 0
     @State private var generation: GenerationController
     @State private var stepURL: URL?
     @State private var pendingImport: (Data, String)?
     @Environment(\.scenePhase) private var scenePhase
+    private var displayedDocument: CADDocument? { generation.livePreview?.document ?? document }
     private let persistence: WorkspacePersistence
 
     init(project: CADProject? = nil, root: URL? = nil,
@@ -48,7 +51,7 @@ struct WorkspaceView: View {
         .task {
             loadWorkspace()
             generation.onResult = { data, step in
-                replaceDocument(try persistence.saveDocument(data, step: step)); stepURL = persistence.stepURL
+                replaceDocument(try persistence.saveDocument(data, step: step), preserveCamera: true); stepURL = persistence.stepURL
             }
             // Reattach to the persisted request. Cloud work continues independently
             // of this observer and retains the same turn and admission identifiers.
@@ -56,6 +59,18 @@ struct WorkspaceView: View {
                generation.pending?.phase == "failed", generation.readyForCAD {
                 generation.retryFailedRun()
             } else { generation.resumeWhenForeground() }
+            if generation.pending == nil, generation.readyForCAD, document != nil,
+               let launchPrompt = LaunchGenerationPrompt.consume() {
+                generation.selectedReferences = []
+                generation.start(prompt: launchPrompt, document: document,
+                    step: stepURL.flatMap { try? Data(contentsOf: $0) })
+            }
+        }
+        .onChange(of: displayedDocument?.revision, initial: true) { _, revision in
+            guard reviewRevision != revision else { return }
+            reviewRevision = revision
+            selection.removeAll(); drawing.load(nil); drawingCamera = nil; mode = .orbit
+            if generation.livePreview == nil, let document { restoreReview(document, restorePrompt: false) }
         }
         .onChange(of: generation.error) { _, value in if let value { error = value; generation.error = nil } }
         .onChange(of: selection) { _, _ in saveReview() }
@@ -74,7 +89,7 @@ struct WorkspaceView: View {
             if old == .draw { saveReview() }
         }
         .sheet(isPresented: $showInspector) {
-            if let document { TopologyInspector(document: document, selection: $selection) }
+            if let document = displayedDocument { TopologyInspector(document: document, selection: $selection) }
         }
         .sheet(isPresented: $showConnection) { connectionSheet }
         .sheet(isPresented: $showActivity) { activitySheet }
@@ -93,17 +108,21 @@ struct WorkspaceView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
+            Button(action: onProjects) {
+                Image(systemName: "sidebar.left").font(.title3).frame(width: 46, height: 46)
+            }.glassEffect(.regular.interactive(), in: .circle)
+                .accessibilityLabel("Projects").accessibilityIdentifier("show-projects")
             Menu {
                 Button("Projects", systemImage: "square.stack.3d.up", action: onProjects)
                 Button("New design", systemImage: "plus", action: onNewProject)
                 Button("Open STEP or preview", systemImage: "folder") { showImport = true }.disabled(generation.pending != nil)
                 Button("Open sample", systemImage: "cube.transparent") { openSample() }.disabled(generation.pending != nil)
-                if let stepURL { ShareLink(item: stepURL) { Label("Export STEP", systemImage: "square.and.arrow.up") } }
+                if let stepURL, generation.livePreview == nil { ShareLink(item: stepURL) { Label("Export STEP", systemImage: "square.and.arrow.up") } }
             } label: {
                 Image(systemName: "square.stack.3d.up").font(.title3).frame(width: 48, height: 48)
             }.glassEffect(.regular.interactive(), in: .circle).accessibilityLabel("Design menu").accessibilityIdentifier("design-menu")
             VStack(alignment: .leading, spacing: 3) {
-                Text("NanoCAD").font(.headline)
+                Text(project?.name ?? "NanoCAD").font(.headline).lineLimit(1)
                 Text(document == nil ? "A new dimension for your ideas" : displayName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }.padding(.leading, 5)
             Spacer(minLength: 4)
@@ -114,8 +133,8 @@ struct WorkspaceView: View {
 
     private var stage: some View {
         ZStack {
-            if let document {
-                CADViewport(document: document, mode: mode, selection: $selection, controller: viewport)
+            if let document = displayedDocument {
+                CADViewport(document: document, mode: mode, selection: $selection, resetToken: cameraResetToken, preservesCamera: true, controller: viewport)
                 if mode == .draw {
                     DrawingReviewLayer(controller: drawing)
                         .transition(.opacity)
@@ -124,7 +143,7 @@ struct WorkspaceView: View {
                     HStack {
                         HStack(spacing: 6) {
                             Circle().fill(.teal).frame(width: 5, height: 5)
-                            Text("STEP").fontWeight(.semibold)
+                            Text(generation.livePreview == nil ? "STEP" : "LIVE · \(generation.previewRevision)").fontWeight(.semibold)
                             Text("·  \(document.units)  ·  \(document.parts.count) \(document.parts.count == 1 ? "body" : "bodies")").foregroundStyle(.secondary)
                         }.font(.caption.monospaced()).padding(.horizontal, 12).padding(.vertical, 8)
                             .glassEffect(.regular, in: .capsule)
@@ -199,7 +218,7 @@ struct WorkspaceView: View {
                 }.buttonStyle(.plain).accessibilityIdentifier("generation-status")
             }
             CADComposer(text: $prompt, selection: $selection,
-                        references: document?.promptReferences(selection) ?? [],
+                        references: displayedDocument?.promptReferences(selection) ?? [],
                         hasDrawing: drawing.strokeCount > 0, busy: generation.busy, connected: generation.readyForCAD,
                         onAttach: { if generation.pending == nil { showImport = true } else { showActivity = true } }, onSend: generate,
                         onStop: stop, onConnect: { showConnection = true })
@@ -213,13 +232,15 @@ struct WorkspaceView: View {
     }
     private func loadWorkspace() {
         guard document == nil else { return }
-        #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("--uitesting-reset") {
-            try? FileManager.default.removeItem(at: persistence.root)
-        }
-        #endif
         do {
-            if let saved = try persistence.loadDocument() { document = saved; stepURL = persistence.stepURL; restoreReview(saved) }
+            if let saved = try persistence.loadDocument() {
+                document = saved; stepURL = persistence.stepURL
+                reviewRevision = displayedDocument?.revision
+                if generation.livePreview == nil { restoreReview(saved) }
+                if FileManager.default.fileExists(atPath: persistence.root.appending(path: "draft.txt").path) {
+                    prompt = try persistence.loadDraft()
+                }
+            }
             else if !persistence.hasSavedWorkspace && (project == nil || project?.legacyRoot == true) { openSample() }
             else { prompt = try persistence.loadDraft() }
         } catch { self.error = error.localizedDescription }
@@ -236,28 +257,27 @@ struct WorkspaceView: View {
             generation.status = ""
         } catch { self.error = error.localizedDescription }
     }
-    private func replaceDocument(_ value: CADDocument) {
-        document = value; selection.removeAll(); drawing.load(nil); drawingCamera = nil; mode = .orbit
-        viewport.fitToModel(); saveReview()
+    private func replaceDocument(_ value: CADDocument, preserveCamera: Bool = false) {
+        document = value; reviewRevision = value.revision; selection.removeAll(); drawing.load(nil); drawingCamera = nil; mode = .orbit
+        if !preserveCamera { cameraResetToken += 1 }; saveReview()
     }
-    private func restoreReview(_ doc: CADDocument) {
+    private func restoreReview(_ doc: CADDocument, restorePrompt: Bool = true) {
         do {
             guard let review = try persistence.loadReview(for: doc.revision) else { return }
             selection = review.selected.intersection(doc.allReferences)
-            drawing.load(review.drawing, image: review.drawingImage); drawingCamera = review.camera; prompt = review.prompt
+            drawing.load(review.drawing, image: review.drawingImage); drawingCamera = review.camera; if restorePrompt { prompt = review.prompt }
         } catch { self.error = error.localizedDescription }
     }
     private func saveReview() {
-        guard let document else {
-            do { try persistence.saveDraft(prompt) } catch { self.error = error.localizedDescription }
-            return
-        }
+        do { try persistence.saveDraft(prompt) } catch { self.error = error.localizedDescription }
+        // A live checkpoint's ordinals and markup never belong to the committed STEP.
+        guard generation.livePreview == nil, let document, reviewRevision == document.revision else { return }
         do { try persistence.save(SavedReview(revision: document.revision, selected: selection, drawing: drawing.canvas.drawing.dataRepresentation(), camera: drawingCamera, prompt: prompt, drawingImage: drawing.referenceImageData)) }
         catch { self.error = error.localizedDescription }
     }
     private func newDesign() {
         do { try persistence.clear() } catch { self.error = error.localizedDescription; return }
-        document = nil; selection.removeAll(); drawing.load(nil); drawingCamera = nil; prompt = ""; stepURL = nil; generation.status = ""
+        document = nil; reviewRevision = nil; selection.removeAll(); drawing.load(nil); drawingCamera = nil; prompt = ""; stepURL = nil; generation.status = ""
     }
     private func importFile(_ url: URL) {
         let accessed = url.startAccessingSecurityScopedResource()
@@ -362,5 +382,17 @@ private extension ViewportMode {
         case .vertex: "Tap a point for a precise reference"
         case .draw: "Sketch an idea with your finger or Pencil"
         }
+    }
+}
+
+/// Explicit device integration launch only; project switching cannot repeat admission.
+@MainActor private enum LaunchGenerationPrompt {
+    static var consumed = false
+    static func consume() -> String? {
+        guard !consumed else { return nil }
+        let arguments = ProcessInfo.processInfo.arguments
+        guard let index = arguments.firstIndex(of: "--generation-prompt"), arguments.indices.contains(index + 1) else { return nil }
+        consumed = true
+        return arguments[index + 1]
     }
 }

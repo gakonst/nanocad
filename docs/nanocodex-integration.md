@@ -12,7 +12,7 @@ Requests use `https://nanocodex-connect-api.gakonst.workers.dev/v1/grants/{grant
 
 ## Durable CAD work
 
-`DurableConnectCADClient` uploads each supplied input before turn admission:
+`DurableConnectCADClient` uploads the supplied inputs concurrently, then verifies every receipt before turn admission:
 
 ```text
 PUT /inputs/{generationUUID}/{filename}
@@ -21,6 +21,8 @@ PUT /inputs/{generationUUID}/{filename}
 ```
 
 The server bounds requests to 1 MB and decoded inputs to 600 KB, validates canonical encoding and the digest, and derives the path from trusted grant identity. It reserves quotas durably. Identical retries restore the accepted bytes and return the same receipt; conflicting replacements fail. All inputs reach durable storage before the app submits its persisted request and turn IDs. Inputs remain ordinary working files visible to the authorized agent, which verifies and copies them before modeling.
+
+The existing durable Astra agent becomes the project’s CAD specialist through `CADAgentProfile`. The app uploads the complete text-to-cad CAD skill pinned to v0.6.6 (commit `4eaf7459a95c0547b089ab53aa579c7597fab1d5`) and its small installer. Installation is idempotent and avoids rewriting an unchanged skill. The specialist keeps model source, immutable imported inputs, and reusable checks in `/brain/project`, uses cadgen’s decorated model and default warm worker, and performs ordinary edits directly. Its instructions batch relevant checks/export and wait for useful tool results instead of one-second polling. These are workflow instructions; post-change live latency is measured separately from deterministic tests.
 
 Astra mounts `cf_sandbox` with a stable project name and reuses its installed CAD environment. Python dependencies stay under `/opt`; `/brain` holds durable task files. Rendering stays native on iOS. The model saves both final files under:
 
@@ -32,6 +34,22 @@ Astra mounts `cf_sandbox` with a stable project name and reuses its installed CA
 The server snapshots only that turn’s scoped output directory. Artifact ownership survives turn archival. NanoCAD lists `GET /artifacts?turn_id={turn}` and downloads `GET /artifacts/{id}/content`, verifying size, SHA-256, document name, and the preview’s STEP revision. Reads for another grant, agent, or account publication are denied. There is no Connect fallback to mutable arbitrary workspace files. Current publication limits are 50 files, 1 MB per file, 10 MB total.
 
 After admission, the phone only observes events; no phone-hosted file channel is needed. Backgrounding cancels the local observer, not cloud execution. Returning reconnects automatically from the saved cursor. Ambiguous admission reuses identical IDs and input; an explicit Stop cancels durable work. Failed requests can be retried as a fresh turn while retaining their prompt and geometry. The old native reverse-tool client is retained only for requests admitted by older builds.
+
+## Live model revisions
+
+The producer writes each valid intermediate STEP/preview pair under the turn’s
+`checkpoints/r<N>/` and publishes its manifest last. The app polls
+`GET /checkpoints?turn_id={turn}&after={revision}`. The service derives authorization
+from final-output plus actions/trace access, verifies bounded sizes and hashes, and
+retains a coherent bundle atomically. Torn/stale writes leave the previous bundle.
+The final artifact publisher excludes checkpoint history.
+
+NanoCAD verifies the exact turn, revision paths, file sizes, hashes, geometry, and
+STEP/preview pairing before displaying **LIVE**. Preview updates preserve the
+camera but clear revision-specific selections and markup. A preview never replaces
+the committed workspace, and its review cannot be saved against another revision.
+Disconnect/relaunch can restore a saved preview; a terminal failure returns to the
+committed model. Final completion alone saves the new document and thumbnail.
 
 ## Progress and transcript
 

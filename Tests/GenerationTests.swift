@@ -21,6 +21,21 @@ private actor GenerationFixture: GenerationClient {
     var failFirstSend = false
     var disconnectFirstStream = false
     var holdCreate = false
+    var holdEvents = false
+    var checkpoints: [CADCheckpoint] = []
+    var checkpointReads = 0
+    var holdCheckpoint = false
+    var checkpointWaiter: CheckedContinuation<Void, Never>?
+    func configurePreviews(_ values: [CADCheckpoint], holdRead: Bool = false) {
+        checkpoints = values; holdEvents = true; holdCheckpoint = holdRead
+    }
+    func releaseEvents() { holdEvents = false }
+    func releaseCheckpoint() { checkpointWaiter?.resume(); checkpointWaiter = nil }
+    func checkpoint(agentID: String, turnID: String, after: Int) async throws -> CADCheckpoint? {
+        checkpointReads += 1
+        if holdCheckpoint { await withCheckedContinuation { checkpointWaiter = $0 } }
+        return checkpoints.isEmpty ? nil : checkpoints.removeFirst()
+    }
     var missingLocalOutput = false
     var scriptedEvents: [NanocodexEvent]?
     var createWaiter: CheckedContinuation<Void, Never>?
@@ -54,6 +69,7 @@ private actor GenerationFixture: GenerationClient {
     }
     func events(agentID: String, after: String, untilTurnID: String?, receive: @escaping @Sendable (NanocodexEvent) async -> Void) async throws {
         cursors.append(after)
+        while holdEvents { try await Task.sleep(for: .milliseconds(10)) }
         if let scriptedEvents {
             for event in scriptedEvents { await receive(event) }
             return
@@ -103,6 +119,91 @@ final class GenerationTests: XCTestCase {
             try await Task.sleep(for: .milliseconds(10))
         }
         XCTFail("Generation did not settle")
+    }
+
+    private func checkpoint(_ step: Data, sequence: Int = 1, turn: String = "turn-fixture") throws -> CADCheckpoint {
+        let json = try preview(step)
+        return CADCheckpoint(turn_id: turn, revision: sequence, files: [
+            .init(path: "r\(sequence)/model.step", sha256: revision(step), size: step.count, data_base64: step.base64EncodedString()),
+            .init(path: "r\(sequence)/model.cad.json", sha256: revision(json), size: json.count, data_base64: json.base64EncodedString())
+        ])
+    }
+    private func eventually(_ condition: () async -> Bool) async throws {
+        for _ in 0..<600 {
+            if await condition() { return }
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        XCTFail("Expected generation transition did not arrive")
+    }
+
+    func testIntermediatePreviewSurvivesRelaunchWithoutCommittingAndFinalReplacesIt() async throws {
+        let root = try directory(), final = Data("STEP-final".utf8), early = Data("STEP-early".utf8)
+        let fixture = try GenerationFixture(step: final)
+        await fixture.configurePreviews([try checkpoint(early)])
+        try seed(pending("running"), at: root)
+        let value = try controller(root, fixture)
+        var applied = 0
+        value.onResult = { _, _ in applied += 1 }
+        value.resume()
+        try await eventually { value.previewRevision == 1 }
+        XCTAssertEqual(value.livePreview?.step, early); XCTAssertEqual(applied, 0)
+        value.pauseObservation(); try await idle(value)
+        let restored = try controller(root, fixture)
+        XCTAssertEqual(restored.livePreview?.step, early)
+        XCTAssertEqual(restored.pending?.turnID, "turn-fixture")
+        restored.onResult = { _, step in XCTAssertEqual(step, final); applied += 1 }
+        await fixture.releaseEvents()
+        restored.resume(); try await idle(restored)
+        XCTAssertEqual(applied, 1); XCTAssertNil(restored.livePreview); XCTAssertNil(restored.pending)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appending(path: "checkpoint.json").path))
+        let sends = await fixture.sendKeys; XCTAssertTrue(sends.isEmpty)
+    }
+
+    func testStalePreviewDoesNotStopWatchingAndFailureRevertsToCommittedModel() async throws {
+        let root = try directory(), fixture = try GenerationFixture(step: Data("FINAL".utf8))
+        let first = try checkpoint(Data("early".utf8)), next = try checkpoint(Data("later".utf8), sequence: 2)
+        await fixture.configurePreviews([first, first, next])
+        await fixture.configureMissingLocalOutput()
+        try seed(pending("running"), at: root)
+        let value = try controller(root, fixture)
+        value.onResult = { _, _ in XCTFail("Incomplete final output cannot be committed") }
+        value.resume()
+        try await eventually { value.previewRevision == 2 }
+        await fixture.releaseEvents(); try await idle(value)
+        XCTAssertEqual(value.pending?.phase, "failed"); XCTAssertNil(value.livePreview)
+        XCTAssertNil(try controller(root, fixture).livePreview)
+    }
+
+    func testLateCheckpointAfterFinalCannotReappear() async throws {
+        let root = try directory(), fixture = try GenerationFixture(step: Data("FINAL".utf8))
+        await fixture.configurePreviews([try checkpoint(Data("old preview".utf8))], holdRead: true)
+        try seed(pending("running"), at: root)
+        let value = try controller(root, fixture)
+        var committed = false; value.onResult = { _, _ in committed = true }
+        value.resume()
+        try await eventually { await fixture.checkpointWaiter != nil }
+        await fixture.releaseEvents(); try await idle(value)
+        XCTAssertTrue(committed)
+        await fixture.releaseCheckpoint()
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertNil(value.livePreview); XCTAssertNil(value.pending)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: root.appending(path: "checkpoint.json").path))
+    }
+
+    func testCheckpointRejectsWrongTurnTornPairAndInvalidFileMetadata() throws {
+        let good = try checkpoint(Data("STEP".utf8))
+        XCTAssertEqual(try good.validated(for: "turn-fixture").revision, 1)
+        XCTAssertThrowsError(try good.validated(for: "foreign"))
+        let other = try checkpoint(Data("OTHER".utf8))
+        let cases: [CADCheckpoint] = [
+            .init(turn_id: good.turn_id, revision: 0, files: good.files),
+            .init(turn_id: good.turn_id, revision: 2, files: good.files),
+            .init(turn_id: good.turn_id, revision: 1, files: [good.files[0], other.files[1]]),
+            .init(turn_id: good.turn_id, revision: 1, files: [good.files[0], good.files[0]]),
+            .init(turn_id: good.turn_id, revision: 1, files: [
+                .init(path: good.files[0].path, sha256: good.files[0].sha256, size: 1_000_001, data_base64: good.files[0].data_base64), good.files[1]])
+        ]
+        for value in cases { XCTAssertThrowsError(try value.validated(for: "turn-fixture")) }
     }
 
     func testAmbiguousAdmissionRetriesPersistedIDsAndAppliesOnce() async throws {

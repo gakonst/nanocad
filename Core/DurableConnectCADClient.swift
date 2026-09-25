@@ -48,15 +48,25 @@ actor DurableConnectCADClient: GenerationClient {
         if let legacy { return try await legacy.createAgent(requestID: requestID, inputFiles: inputFiles, instructions: instructions) }
         guard let generation, generation.creationID == requestID, let grant = credentials.connect else { throw NanocodexError.invalidReference }
         try await client.selectAstra(agentID: grant.agentID)
-        for input in inputFiles {
-            try Task.checkCancellation()
-            uploaded[input.path] = try await upload(input, generationID: generation.creationID, agentID: grant.agentID)
-        }
+        try await uploadInputs(inputFiles, generationID: generation.creationID, agentID: grant.agentID)
         return grant.agentID
     }
 
+    private func uploadInputs(_ files: [NanocodexInputFile], generationID: String, agentID: String) async throws {
+        guard files.count <= 8 else { throw NanocodexError.inputTooLarge }
+        try await withThrowingTaskGroup(of: (String, InputReceipt).self) { group in
+            for file in files {
+                group.addTask {
+                    try Task.checkCancellation()
+                    return (file.path, try await self.upload(file, generationID: generationID, agentID: agentID))
+                }
+            }
+            for try await (path, receipt) in group { uploaded[path] = receipt }
+        }
+    }
+
     private func upload(_ file: NanocodexInputFile, generationID: String, agentID: String) async throws -> InputReceipt {
-        let names = ["/brain/tools/export_step.py": "export_step.py", "/brain/input/model.step": "model.step", "/brain/input/markup.jpg": "markup.jpg"]
+        let names = ["/brain/tools/export_step.py": "export_step.py", "/brain/tools/cad-skill.json": "cad-skill.json", "/brain/tools/cad_project.py": "cad_project.py", "/brain/input/model.step": "model.step", "/brain/input/markup.jpg": "markup.jpg"]
         guard let name = names[file.path], UUID(uuidString: generationID) != nil,
               file.data.count <= 600_000 else { throw NanocodexError.inputTooLarge }
         let digest = SHA256.hash(data: file.data).map { String(format: "%02x", $0) }.joined()
@@ -80,9 +90,8 @@ actor DurableConnectCADClient: GenerationClient {
         // Admission may be retried after the app was killed between upload and
         // receipt persistence. Immutable identical PUTs safely recover receipts.
         if uploaded.count != generation.files.count {
-            for file in generation.files {
-                uploaded[file.path] = try await upload(.init(path: file.path, data: file.data), generationID: generation.creationID, agentID: agentID)
-            }
+            try await uploadInputs(generation.files.map { .init(path: $0.path, data: $0.data) },
+                                   generationID: generation.creationID, agentID: agentID)
         }
         let inputLines = generation.files.compactMap { file -> String? in
             guard let receipt = uploaded[file.path] else { return nil }
@@ -97,11 +106,27 @@ actor DurableConnectCADClient: GenerationClient {
         This request is fully uploaded. Continue working if the phone disconnects. Use the persistent Cloudflare sandbox named cad-\(grant.conversationID.lowercased()) with provider cf_sandbox, reusing its installed /opt/nanocad environment for subsequent edits. Do not use native app file tools: the phone does not need to stay open. Read these exact uploaded inputs from /brain, verify their SHA-256, and copy each to its indicated working path before modeling:
         \(inputLines)
         Save this generation's final pair at \(outputRoot)/model.step and \(outputRoot)/model.cad.json. Only those outputs belong to this request. The platform publishes them as immutable turn artifacts. Both should remain below 1 MB; adjust preview tessellation when needed while preserving STEP geometry. Do not finish until both files are saved and validated. Do not send file contents through app tools or the transcript.
+        LIVE MODEL PREVIEWS
+        After each meaningful valid modeling step, publish a native preview checkpoint. Run the shipped exporter with --checkpoint-dir \(outputRoot)/checkpoints --checkpoint-revision N, increasing N from 1 for this request. It writes a verified STEP/preview pair and publishes the manifest last. Publish an initial valid shape early and further checkpoints as you add requested features; these are real geometry, not placeholders. Also save the final pair at the exact final paths above. Checkpoints never replace final publication.
         Send a brief plain-language progress update when beginning inspection, modeling, and validation. Explain what is actually happening without tool names or invented progress percentages.
         USER REQUEST:
         \(prompt)
         """
         return try await client.send(agentID: agentID, prompt: context, references: references, revision: revision, requestID: requestID, turnID: turnID)
+    }
+
+    func checkpoint(agentID: String, turnID: String, after: Int) async throws -> CADCheckpoint? {
+        guard let generation, generation.transport == "cloud", generation.turnID == turnID,
+              credentials.connect?.agentID == agentID else { return nil }
+        let request = try client.request(path: "/v1/agents/\(agentID)/checkpoints?turn_id=\(turnID)&after=\(max(0, after))")
+        let (bytes, response) = try await session.data(for: request)
+        guard let response = response as? HTTPURLResponse else { throw NanocodexError.invalidResponse }
+        if [204, 304, 404].contains(response.statusCode) { return nil }
+        guard response.statusCode == 200 else { throw NanocodexError.http(response.statusCode) }
+        guard bytes.count <= 2_800_000 else { throw NanocodexError.inputTooLarge }
+        let checkpoint = try JSONDecoder().decode(CADCheckpoint.self, from: bytes)
+        _ = try checkpoint.validated(for: turnID)
+        return checkpoint
     }
 
     func events(agentID: String, after: String, untilTurnID: String?, receive: @escaping @Sendable (NanocodexEvent) async -> Void) async throws {

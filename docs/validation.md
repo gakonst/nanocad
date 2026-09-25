@@ -4,7 +4,7 @@ Validated with Xcode 26.6 (17F113), Swift 6, and iOS Simulator 26.5. Synthetic t
 
 ## Native app
 
-The current full iPhone 17 Pro simulator run passed **80 native tests and all eight UI scenarios** in one run. A further 15 targeted generation/HTTP tests passed after tightening legacy-result recovery and terminal missing-output handling.
+The live-preview implementation passed **84 native tests and all eight UI scenarios** in one iPhone simulator run. The subsequent CAD specialist and integrity review passed **90 native tests**. A further run of **all eight iPhone UI scenarios passed** after the drawer and preview review-state corrections. The same project/draft/thumbnail scenario also passed on an iPad simulator.
 
 Coverage includes:
 
@@ -16,17 +16,19 @@ Coverage includes:
 
 An earlier run exposed unsigned-simulator Keychain access and two transcript/status regressions. Simulator ad-hoc signing and the affected behavior were corrected before the complete passing run. No failed or interrupted run is counted as a pass.
 
-The device Release build also passes and is signed for a physical iPhone. See the live boundary below before interpreting a build as proof of cloud execution.
+The final Release build (0.4.0, build 6) passes and was installed successfully on the paired physical iPhone. iOS rejected the follow-up test launch because the device was locked; no new generation was admitted by that launch. See the live boundary below before interpreting a build as proof of cloud execution.
 
 ## CAD geometry and Connect bundle
 
-Six Python checks pass on both macOS and a real Linux Cloudflare sandbox against cadgen/Open CASCADE: canonical references, placements, area/length/vertex metrics, normals, winding, positive volume, degenerate sphere edges, and both generated and bundled preview geometry. Same-runtime repeated export remains exact; mesh ordering is not assumed identical between platforms.
+Seven Python geometry checks pass on macOS (the original six also passed in a real Linux Cloudflare sandbox) against cadgen/Open CASCADE: canonical references, placements, area/length/vertex metrics, normals, winding, positive volume, degenerate sphere edges, and both generated and bundled preview geometry. Same-runtime repeated export remains exact; mesh ordering is not assumed identical between platforms.
+
+Three skill-installer checks cover the exact pinned bundle, idempotent installation, unsafe paths/symlinks and rejected revisions.
 
 All three public Connect SDK contract tests and bundle builds pass on macOS and Linux. Generated JavaScript and license notices match exactly across both environments.
 
 ## Server contract
 
-Nanocodex’s durable-file change passes 22 managed Workers tests and 80 Connect tests (one existing Connect test is skipped). The managed journey admits a real Durable Object turn, reads the durable uploaded bytes through actual Just Bash, publishes scoped output, archives the turn, and verifies allowed replay/downloads and cross-grant denial. Its model response is synthetic; this establishes server behavior, not CAD-kernel quality or a live Astra run. Both service typechecks and Worker dry-runs pass.
+The durable-file and live-checkpoint server changes pass 48 focused managed Workers tests and 81 Connect tests (one existing Connect test is skipped). The managed journey admits a real Durable Object turn, reads the durable uploaded bytes through actual Just Bash, publishes scoped output, archives the turn, and verifies allowed replay/downloads and cross-grant denial. Its model response is synthetic; this establishes server behavior, not CAD-kernel quality or a live Astra run. Both service typechecks and Worker dry-runs pass.
 
 ## Live boundary
 
@@ -34,9 +36,11 @@ A real physical iPhone Connect transfer completed on 2026-09-25: Astra reconstru
 
 Separately, the unchanged exporter ran in a real Cloudflare sandbox with Python 3.12.11, cadgen 0.6.6 and build123d 0.11.1. A saved 40 × 30 × 8 mm plate with a centered Ø6 mm through-hole reopened as a valid solid, with matching STEP/preview hashes and measured volume 9,373.805328941526 mm³. That sandbox used root-account authority, not the native Connect grant.
 
-A physical-device run that closes NanoCAD after the new durable submission and reopens its finished CAD result is still being established. Do not infer that result from the tests above. Remote completion notifications, TestFlight distribution, hardware Apple Pencil behavior and large-assembly performance are not established.
+Two real physical iPhone edits completed through the project’s scoped Cloudflare sandbox: a Ø24 upright opening became a 24 × 24 square, then both Ø10 base holes became 10 × 10 squares. The latter saved a valid 63,664-byte STEP with 20 faces; the downloaded native preview matched SHA-256 `0cc07c32843515cefd5c1919c053f0256e50a3d6c563077e71d3e0c4c3c81100`. These prove cloud generation and final delivery, before the specialist/preview update.
 
-Earlier renderer evidence remains available: [iPhone workspace](images/workspace.png), [face selection](images/selection.png), [markup](images/markup.png), [iPad workspace](images/ipad.png), and the separate [Astra geometry workflow](astra-workflow.md).
+A physical-device run that closes NanoCAD after the new durable submission and reopens its finished CAD result is still pending an unlocked-device run. Do not infer that result from the tests above. Remote completion notifications, TestFlight distribution, hardware Apple Pencil behavior and large-assembly performance are not established.
+
+Earlier renderer evidence remains available: [iPhone workspace](images/workspace.png), [face selection](images/selection.png), [markup](images/markup.png), [iPad workspace](images/ipad.png), the [project drawer with a real model thumbnail](images/projects-drawer.png), and the separate [Astra geometry workflow](astra-workflow.md).
 
 ## Reproduce
 
