@@ -200,6 +200,27 @@ final class NanoCADUITests: XCTestCase {
         waitForValue("11 faces, 0 selected", of: viewport(in: app))
     }
 
+    @MainActor
+    func testProjectsKeepSeparateModelsAndUnsentDraftsAcrossRelaunch() {
+        let app = launchFreshSample()
+        let composer = app.textViews["composer"]
+        composer.tap(); composer.typeText("Keep the bracket holes")
+        app.buttons["design-menu"].tap()
+        app.buttons["New design"].tap()
+        XCTAssertTrue(app.staticTexts["Give your idea shape."].waitForExistence(timeout: 5))
+        waitForValue("", of: composer)
+        composer.tap(); composer.typeText("Make a cable clip")
+        app.terminate(); app.launchArguments = localeArguments; app.launch()
+        XCTAssertTrue(app.staticTexts["Give your idea shape."].waitForExistence(timeout: 5))
+        waitForValue("Make a cable clip", of: composer)
+        app.buttons["design-menu"].tap(); app.buttons["Projects"].tap()
+        let original = app.buttons.containing(.staticText, identifier: "My Project").firstMatch
+        XCTAssertTrue(original.waitForExistence(timeout: 5)); original.tap()
+        waitForValue("11 faces, 0 selected", of: viewport(in: app))
+        waitForValue("Keep the bracket holes", of: composer)
+        attachScreenshot(app, named: "projects-original-model-and-draft-restored")
+    }
+
     private var localeArguments: [String] {
         ["-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
     }

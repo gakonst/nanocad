@@ -18,6 +18,14 @@ struct WorkspacePersistence {
         self.root = root ?? URL.documentsDirectory.appending(path: "NanoCAD", directoryHint: .isDirectory)
     }
     func prepare() throws { try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true) }
+    func saveDraft(_ text: String) throws {
+        try prepare()
+        try Data(text.utf8).write(to: root.appending(path: "draft.txt"), options: .atomic)
+    }
+    func loadDraft() throws -> String {
+        let url = root.appending(path: "draft.txt")
+        return FileManager.default.fileExists(atPath: url.path) ? try String(contentsOf: url, encoding: .utf8) : ""
+    }
     func save(_ review: SavedReview) throws {
         try prepare()
         try JSONEncoder().encode(review).write(to: root.appending(path: "review.json"), options: .atomic)
@@ -71,6 +79,7 @@ struct WorkspacePersistence {
         try prepare()
         try JSONEncoder().encode(Manifest(snapshot: nil)).write(to: manifestURL, options: .atomic)
         try? FileManager.default.removeItem(at: root.appending(path: "review.json"))
+        try? FileManager.default.removeItem(at: root.appending(path: "draft.txt"))
     }
     private var manifestURL: URL { root.appending(path: "workspace.json") }
     private func currentDirectory() throws -> URL? {

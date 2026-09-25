@@ -9,10 +9,12 @@ settings:
     TARGETED_DEVICE_FAMILY: '1,2'
     DEVELOPMENT_TEAM: ''
     CODE_SIGNING_ALLOWED: NO
+    'CODE_SIGNING_ALLOWED[sdk=iphonesimulator*]': YES
+    'CODE_SIGN_IDENTITY[sdk=iphonesimulator*]': '-'
     GENERATE_INFOPLIST_FILE: YES
     INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
-    MARKETING_VERSION: 0.2.1
-    CURRENT_PROJECT_VERSION: 3
+    MARKETING_VERSION: 0.3.0
+    CURRENT_PROJECT_VERSION: 5
     INFOPLIST_KEY_UILaunchScreen_Generation: YES
     INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
     INFOPLIST_KEY_CFBundleDisplayName: NanoCAD

@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct ConnectionView: View {
+    let projectID: String?
+    let conversationID: String?
     var onConnect: (NanocodexCredentials) -> Void
     var onDisconnect: () -> Void
     @Environment(\.dismiss) private var dismiss
@@ -12,7 +14,8 @@ struct ConnectionView: View {
     @State private var connectionTask: Task<Void, Never>?
     @State private var authorization = ConnectAuthorization()
 
-    init(onConnect: @escaping (NanocodexCredentials) -> Void = { _ in }, onDisconnect: @escaping () -> Void = {}) {
+    init(projectID: String? = nil, conversationID: String? = nil, onConnect: @escaping (NanocodexCredentials) -> Void = { _ in }, onDisconnect: @escaping () -> Void = {}) {
+        self.projectID = projectID; self.conversationID = conversationID
         self.onConnect = onConnect; self.onDisconnect = onDisconnect
     }
 
@@ -23,20 +26,14 @@ struct ConnectionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Image(systemName: "sparkles").font(.system(size: 34)).foregroundStyle(.teal)
                         Text("Create with Astra").font(.title2.bold())
-                        Text("Bring your ideas to life with your Nanocodex account. Approve NanoCAD once, then prompt, select, and refine.")
+                        Text("Bring your ideas to life with your Nanocodex account. Connect, then prompt, select, and refine.")
                             .foregroundStyle(.secondary)
                     }.padding(.vertical, 16)
                 }
-                if let savedConnection {
+                if let savedConnection, savedConnection.connect == nil || savedConnection.connect?.sandboxExecution == true {
                     Section {
                         Label(savedConnection.connect == nil ? "Account connected" : "Nanocodex Connect is ready", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.teal)
-                        if let grant = savedConnection.connect, grant.sandboxExecution != true {
-                            Button("Enable CAD creation", action: connectWithNanocodex)
-                                .disabled(connecting).accessibilityIdentifier("upgrade-cad-connection")
-                            Text("Approve an isolated Cloudflare sandbox so Astra can build real CAD geometry.")
-                                .foregroundStyle(.secondary)
-                        }
                         Button("Disconnect", role: .destructive, action: disconnect)
                             .disabled(connecting).accessibilityIdentifier("disconnect-account")
                     } footer: {
@@ -61,7 +58,7 @@ struct ConnectionView: View {
                     Section {
                         Label("Create and refine with Astra", systemImage: "cube.transparent")
                         Label("Use your selected geometry and drawings", systemImage: "pencil.tip.crop.circle")
-                        Label("Keep NanoCAD open while creating", systemImage: "iphone")
+                        Label("Your project keeps working when you leave", systemImage: "cloud")
                     }
                 }
                 if let error {
@@ -89,14 +86,14 @@ struct ConnectionView: View {
                 }
             }
             .task {
-                if let saved = try? ConnectionCredentials.load() { origin = saved.origin; savedConnection = saved }
+                if let saved = try? ConnectionCredentials.load(projectID: projectID) { origin = saved.origin; savedConnection = saved }
             }
             .onDisappear { connectionTask?.cancel(); authorization.cancel(); apiKey = "" }
         }
     }
 
     private func connectWithNanocodex() {
-        runConnection { try await authorization.connect() }
+        runConnection { try await authorization.connect(conversationID: conversationID) }
     }
 
     private func connectWithKey() {
@@ -113,7 +110,7 @@ struct ConnectionView: View {
                 defer { client.close() }
                 try await client.validateConnection()
                 try Task.checkCancellation()
-                try ConnectionCredentials.save(value)
+                try ConnectionCredentials.save(value, projectID: projectID)
                 apiKey = ""
                 onConnect(value)
                 dismiss()
@@ -134,7 +131,7 @@ struct ConnectionView: View {
                 defer { client.close() }
                 do { try await client.revokeConnection() }
                 catch NanocodexError.http(let status) where status == 401 || status == 404 { /* already inactive */ }
-                try ConnectionCredentials.remove()
+                try ConnectionCredentials.remove(projectID: projectID)
                 self.savedConnection = nil; onDisconnect(); dismiss()
             } catch { self.error = error.localizedDescription }
         }

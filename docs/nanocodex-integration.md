@@ -1,29 +1,43 @@
 # Nanocodex Connect integration
 
-NanoCAD bundles `nanocodex/connect` 0.6.5 and opens its existing `Dialog.popup` in a native WKWebView sheet, using the public SDK’s popup protocol. There is no separate login website, callback service, app-owned provider key, or custom cryptographic authorization protocol.
+NanoCAD bundles `nanocodex/connect` 0.6.5 and opens the existing `Dialog.popup` inside a native WKWebView sheet. No separate login website, callback service, provider key, or custom authorization protocol is required.
 
-## Approval and native bridge
+## Project identity and approval
 
-`Connect/` builds the public JavaScript SDK into `Resources/connect.js`. The local main document uses the canonical Nanocodex origin as its WebKit base URL; the dialog loads from `https://nanocodex.gakonst.workers.dev/connect-dialog/`. The popup becomes a child WKWebView with its standard `window.opener` protocol; only the bundled parent owns the native message bridge. The existing dialog handles SMS account sign-in and approval. API traffic uses the deployed `https://nanocodex-connect-api.gakonst.workers.dev` endpoint. The SDK's unused `api.nanocodex.xyz` default is overridden.
+Each project persists its conversation UUID before opening Connect. The returned durable agent, scoped grant, and device-only Keychain entry belong to that project. The original workspace adopts its existing conversation and files in place. New projects receive separate roots, conversations, and credentials; switching projects never moves a grant between them.
 
-`Client.create` uses app ID `com.gakonst.nanocad`, a fresh conversation UUID, hosted authorization, ChatGPT, final replies, action summaries, conversation history, raw traces, and the exact signed tool catalog in `Resources/connect-tool-catalog.json`. SDK session storage is held in memory. After approval, the WebKit message bridge passes only the scoped grant to Swift. Swift checks the main-frame security origin, current attempt and conversation, granted agent, expiration, and exact tool catalog digest; the API validates the grant before it is saved in device-only Keychain. Cancel and dismissal remove the bridge. Main-frame navigation away from the bundled document is rejected.
+The WebKit parent uses Nanocodex’s canonical origin and the existing `/connect-dialog/` popup protocol. The native bridge checks the main frame, origin, attempt, conversation, agent, expiration, and signed tool catalog. The API validates the grant before it is saved. The dialog requests ChatGPT/Astra, final replies, activity/history/traces, and `urn:nanocodex:agent:execution:sandbox` in the ordinary approval. Send preserves the draft while any required connection is completed.
 
-CAD execution requests the signed `urn:nanocodex:agent:execution:sandbox` resource through the same hosted dialog. The server projects `agent.execution.sandbox` only from approved resources; the native handoff verifies it. Existing approvals without this capability show **Enable CAD creation** and require a fresh Connect approval. It grants an isolated Cloudflare sandbox, with public network access for CAD dependencies. It does not grant access to personal computers or account-authenticated sandbox egress.
+Requests use `https://nanocodex-connect-api.gakonst.workers.dev/v1/grants/{grant}/agents/{agent}/...`, with the exact approved app ID, Origin and bearer. A grant never becomes an account key. It cannot target another agent or access arbitrary account `/files` or `/configuration`. Disconnect revokes its approval before removing local credentials.
 
-The Connect grant never becomes an account API key. Native HTTP requests include its bearer, exact app ID and approved Origin, and use `/v1/grants/{grant}/agents/{agent}/...`. They cannot target another agent. Disconnect revokes the grant before removing its local credentials. The older account key connection remains under Advanced connection.
+## Durable CAD work
 
-## CAD files
+`DurableConnectCADClient` uploads each supplied input before turn admission:
 
-Connect intentionally disallows account-only workspace `/files`, `/configuration`, and `/artifacts` routes. NanoCAD uses two explicitly approved app tools through the public reverse-tool WebSocket protocol instead:
+```text
+PUT /inputs/{generationUUID}/{filename}
+{ "data_base64": "…", "sha256": "…" }
+→ { "path": "/brain/connect/{grant}/inputs/{generation}/{filename}", "sha256": "…", "size": 123 }
+```
 
-- `nanocad_read_input`: reads bounded chunks of the current STEP, markup, or bundled exporter only.
-- `nanocad_write_output`: receives chunks of `model.step` and `model.cad.json` only.
+The server bounds requests to 1 MB and decoded inputs to 600 KB, validates canonical encoding and the digest, and derives the path from trusted grant identity. It reserves quotas durably. Identical retries restore the accepted bytes and return the same receipt; conflicting replacements fail. All inputs reach durable storage before the app submits its persisted request and turn IDs. Inputs remain ordinary working files visible to the authorized agent, which verifies and copies them before modeling.
 
-The authenticated socket is bound to the exact granted agent and signed catalog. The native host accepts only the current persisted generation ID, then pins its first valid runtime session/turn pair across reconnects. Public managed agent/turn IDs and hosted-tool runtime IDs are separate identifiers. File transfer stays on the root agent. Chunks are at most 32 KiB; output files are at most 80 MB. Each file has an exact total size and SHA-256. Identical chunks may be retried; conflicting data, other generations, paths, or agents are rejected. Files persist across connection loss and only replace the visible document after the complete STEP/preview digest pair validates.
+Astra mounts `cf_sandbox` with a stable project name and reuses its installed CAD environment. Python dependencies stay under `/opt`; `/brain` holds durable task files. Rendering stays native on iOS. The model saves both final files under:
 
-The public socket protocol uses a short-lived ticket, catalog/ready handshake, turn metadata, call/result/ack messages, deadlines, byte budgets, heartbeat, and bounded reconnect. Neither tickets nor credentials are logged. Cloud work selects `gpt-6-astra`, high effort; later prompts verify the retained model without patching its immutable selection, using the real cadgen exporter and execution hands. The model transfers file bytes programmatically through Code Mode rather than reproducing geometry or encoding bytes in its reply.
+```text
+/brain/connect/{grant}/outputs/{turn}/model.step
+/brain/connect/{grant}/outputs/{turn}/model.cad.json
+```
 
-Keep NanoCAD open while creating. The native app temporarily prevents automatic screen locking while a generation is active. iOS may suspend its tool connection when backgrounded. Resume retains the original request/turn IDs and cursor; Stop cancels the server turn explicitly. A terminal turn without both completed outputs becomes a recoverable failure; Retry generation uses a fresh request and turn while preserving the original prompt and input geometry. An interrupted nonterminal turn still resumes its existing IDs. Account-key mode retains immutable server artifacts and account-only file fallback.
+The server snapshots only that turn’s scoped output directory. Artifact ownership survives turn archival. NanoCAD lists `GET /artifacts?turn_id={turn}` and downloads `GET /artifacts/{id}/content`, verifying size, SHA-256, document name, and the preview’s STEP revision. Reads for another grant, agent, or account publication are denied. There is no Connect fallback to mutable arbitrary workspace files. Current publication limits are 50 files, 1 MB per file, 10 MB total.
+
+After admission, the phone only observes events; no phone-hosted file channel is needed. Backgrounding cancels the local observer, not cloud execution. Returning reconnects automatically from the saved cursor. Ambiguous admission reuses identical IDs and input; an explicit Stop cancels durable work. Failed requests can be retried as a fresh turn while retaining their prompt and geometry. The old native reverse-tool client is retained only for requests admitted by older builds.
+
+## Progress and transcript
+
+The compact status uses actual assistant commentary or a conservative description of current tool activity. It does not fabricate percentages or expose raw reasoning. The expanded conversation persists user prompts, assistant updates and answers, plus expandable tool calls/results. Streaming items coalesce by item/phase/model-call identity; cursor replay does not duplicate history. Credential fields and encoded file bytes are removed. The app retains up to 4,000 entries and 8 MB of transcript text, with explicit omission notices.
+
+Completion push notifications are not implemented. Existing local notification mechanisms cannot guarantee delivery after termination; reliable delivery needs APNs registration, a push-enabled profile, and a durable server publisher.
 
 ## Build
 
@@ -36,6 +50,4 @@ cd ..
 xcodegen generate
 ```
 
-The shared catalog's domain-separated SHA-256 is `0xab8780ca9aeab58e676f213b6a1e56a556121029ccafcf2f0cf0848ada68d84e`. The build checks its exact normalization against the public SDK. CI rebuilds the JS bundle and rejects drift.
-
-See [validation](validation.md) for the actual tested boundary. Native WebKit dialog loading and synthetic grant/file tests do not prove a user-approved live Astra round trip.
+CI checks the generated SDK bundle and dependency notices for drift. Simulator builds use ad-hoc signing so Keychain identity works without distribution credentials. Physical builds need your development team. See [validation](validation.md) for actual tested coverage and live-integration limits.

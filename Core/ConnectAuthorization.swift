@@ -54,7 +54,7 @@ enum ConnectError: LocalizedError {
         case .invalidCallback: "The Connect response could not be verified. Please connect again."
         case .invalidCatalog: "The CAD connection tools are missing from this build."
         case .expired: "Your Nanocodex connection has expired. Connect again to continue."
-        case .executionApprovalRequired: "Enable CAD creation in Nanocodex Connect to let Astra run the geometry kernel in an isolated sandbox."
+        case .executionApprovalRequired: "Reconnect Nanocodex to continue creating."
         case .unavailable: "The secure sign-in sheet could not open. Please try again."
         }
     }
@@ -71,11 +71,13 @@ final class ConnectAuthorization: NSObject, WKScriptMessageHandler, WKNavigation
     private var attemptID: String?
     private var conversationID: String?
 
-    func connect() async throws -> NanocodexCredentials {
+    func connect(conversationID requestedConversationID: String? = nil) async throws -> NanocodexCredentials {
         guard completion == nil,
               let resource = Bundle.main.url(forResource: "connect", withExtension: "js") else { throw ConnectError.unavailable }
         let script = try String(contentsOf: resource, encoding: .utf8)
-        let attempt = UUID().uuidString.lowercased(), conversation = UUID().uuidString.lowercased()
+        let attempt = UUID().uuidString.lowercased()
+        let conversation = (requestedConversationID ?? UUID().uuidString).lowercased()
+        guard UUID(uuidString: conversation) != nil else { throw ConnectError.invalidCallback }
         let values = try JSONSerialization.data(withJSONObject: ["attemptID": attempt, "conversationID": conversation])
         let bootstrap = "window.nanoCADConnectConfiguration=" + String(decoding: values, as: UTF8.self) + ";\n" + script
         return try await withTaskCancellationHandler {

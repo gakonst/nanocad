@@ -3,6 +3,9 @@ import UniformTypeIdentifiers
 import PencilKit
 
 struct WorkspaceView: View {
+    let project: CADProject?
+    var onProjects: () -> Void
+    var onNewProject: () -> Void
     @State private var document: CADDocument?
     @State private var selection = Set<String>()
     @State private var mode: ViewportMode = .orbit
@@ -11,15 +14,25 @@ struct WorkspaceView: View {
     @State private var showImport = false
     @State private var showConnection = false
     @State private var showActivity = false
+    @State private var authorization = ConnectAuthorization()
+    @State private var connectionTask: Task<Void, Never>?
     @State private var error: String?
     @State private var drawing = DrawingController()
     @StateObject private var viewport = ViewportController()
     @State private var drawingCamera: ViewportCameraState?
-    @State private var generation = GenerationController()
+    @State private var generation: GenerationController
     @State private var stepURL: URL?
     @State private var pendingImport: (Data, String)?
     @Environment(\.scenePhase) private var scenePhase
-    private let persistence = WorkspacePersistence()
+    private let persistence: WorkspacePersistence
+
+    init(project: CADProject? = nil, root: URL? = nil,
+         onProjects: @escaping () -> Void = {}, onNewProject: @escaping () -> Void = {}) {
+        self.project = project; self.onProjects = onProjects; self.onNewProject = onNewProject
+        persistence = WorkspacePersistence(root: root)
+        _generation = State(initialValue: GenerationController(root: root,
+            loadCredentials: { try ConnectionCredentials.load(projectID: project?.credentialProjectID) }))
+    }
 
     var body: some View {
         ZStack {
@@ -37,14 +50,21 @@ struct WorkspaceView: View {
             generation.onResult = { data, step in
                 replaceDocument(try persistence.saveDocument(data, step: step)); stepURL = persistence.stepURL
             }
-            // A completed turn can finish local artifact recovery immediately.
-            // This never admits a new prompt or replays a terminal turn.
-            if generation.pending?.phase == "downloading" { generation.resume() }
+            // Reattach to the persisted request. Cloud work continues independently
+            // of this observer and retains the same turn and admission identifiers.
+            if ProcessInfo.processInfo.arguments.contains("--retry-failed-generation"),
+               generation.pending?.phase == "failed", generation.readyForCAD {
+                generation.retryFailedRun()
+            } else { generation.resumeWhenForeground() }
         }
         .onChange(of: generation.error) { _, value in if let value { error = value; generation.error = nil } }
         .onChange(of: selection) { _, _ in saveReview() }
         .onChange(of: prompt) { _, _ in saveReview() }
-        .onChange(of: scenePhase) { _, phase in if phase != .active { saveReview() } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { generation.resumeWhenForeground() }
+            else { saveReview() }
+            if phase == .background { generation.pauseObservation() }
+        }
         .onChange(of: mode) { old, new in
             if new == .draw {
                 if drawing.strokeCount > 0, let drawingCamera { viewport.restoreCamera(drawingCamera) }
@@ -58,6 +78,7 @@ struct WorkspaceView: View {
         }
         .sheet(isPresented: $showConnection) { connectionSheet }
         .sheet(isPresented: $showActivity) { activitySheet }
+        .onDisappear { generation.pauseObservation(); saveReview() }
         .onOpenURL { url in importFile(url) }
         .fileImporter(isPresented: $showImport, allowedContentTypes: [.json, .data], allowsMultipleSelection: false) { result in
             switch result {
@@ -73,7 +94,8 @@ struct WorkspaceView: View {
     private var header: some View {
         HStack(alignment: .center) {
             Menu {
-                Button("New design", systemImage: "plus") { newDesign() }.disabled(generation.pending != nil)
+                Button("Projects", systemImage: "square.stack.3d.up", action: onProjects)
+                Button("New design", systemImage: "plus", action: onNewProject)
                 Button("Open STEP or preview", systemImage: "folder") { showImport = true }.disabled(generation.pending != nil)
                 Button("Open sample", systemImage: "cube.transparent") { openSample() }.disabled(generation.pending != nil)
                 if let stepURL { ShareLink(item: stepURL) { Label("Export STEP", systemImage: "square.and.arrow.up") } }
@@ -161,8 +183,16 @@ struct WorkspaceView: View {
             if generation.busy || !generation.status.isEmpty {
                 Button { showActivity = true } label: {
                     HStack(spacing: 8) {
-                        if generation.busy { ProgressView().controlSize(.small) } else { Image(systemName: "checkmark.circle.fill").foregroundStyle(.teal) }
-                        Text(generation.status).lineLimit(1)
+                        if generation.busy { ProgressView().controlSize(.small) }
+                        else { Image(systemName: generation.pending == nil ? "checkmark.circle.fill" : "exclamationmark.circle")
+                                .foregroundStyle(generation.pending == nil ? Color.teal : Color.orange) }
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(generation.statusSummary).lineLimit(2).multilineTextAlignment(.leading)
+                            if generation.pending?.transport == "cloud", generation.pending?.phase == "running" {
+                                Text("Working in the cloud · You can close NanoCAD")
+                                    .font(.caption2).foregroundStyle(.tertiary)
+                            }
+                        }
                         Spacer()
                         Image(systemName: "chevron.up").font(.caption2)
                     }.font(.caption).foregroundStyle(.secondary).padding(.horizontal, 20)
@@ -170,7 +200,7 @@ struct WorkspaceView: View {
             }
             CADComposer(text: $prompt, selection: $selection,
                         references: document?.promptReferences(selection) ?? [],
-                        hasDrawing: drawing.strokeCount > 0, busy: generation.busy, connected: generation.connected,
+                        hasDrawing: drawing.strokeCount > 0, busy: generation.busy, connected: generation.readyForCAD,
                         onAttach: { if generation.pending == nil { showImport = true } else { showActivity = true } }, onSend: generate,
                         onStop: stop, onConnect: { showConnection = true })
                 .padding(.horizontal, 12)
@@ -190,7 +220,8 @@ struct WorkspaceView: View {
         #endif
         do {
             if let saved = try persistence.loadDocument() { document = saved; stepURL = persistence.stepURL; restoreReview(saved) }
-            else if !persistence.hasSavedWorkspace { openSample() }
+            else if !persistence.hasSavedWorkspace && (project == nil || project?.legacyRoot == true) { openSample() }
+            else { prompt = try persistence.loadDraft() }
         } catch { self.error = error.localizedDescription }
         drawing.onChange = { saveReview() }
     }
@@ -217,7 +248,10 @@ struct WorkspaceView: View {
         } catch { self.error = error.localizedDescription }
     }
     private func saveReview() {
-        guard let document else { return }
+        guard let document else {
+            do { try persistence.saveDraft(prompt) } catch { self.error = error.localizedDescription }
+            return
+        }
         do { try persistence.save(SavedReview(revision: document.revision, selected: selection, drawing: drawing.canvas.drawing.dataRepresentation(), camera: drawingCamera, prompt: prompt, drawingImage: drawing.referenceImageData)) }
         catch { self.error = error.localizedDescription }
     }
@@ -238,39 +272,44 @@ struct WorkspaceView: View {
     }
 
     private var connectionSheet: some View {
-        ConnectionView(onConnect: { credentials in
+        ConnectionView(projectID: project?.credentialProjectID, conversationID: project?.conversationID, onConnect: { credentials in
             generation.credentials = credentials
             if let (data, name) = pendingImport { pendingImport = nil; importSTEP(data, name: name) }
         }, onDisconnect: { generation.credentials = nil })
     }
     private var activitySheet: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    Label(generation.busy ? "Astra is working" : "Your design conversation", systemImage: "sparkle").font(.headline)
-                    if generation.response.isEmpty { Text("Send a prompt to create or refine a model. Selected topology and markup are included with your request.").foregroundStyle(.secondary) }
-                    else { Text(generation.response).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading) }
-                    if generation.canResume {
-                        if generation.pending?.phase != "failed" || generation.pending?.stopRequested == true {
-                            Button(generation.pending?.stopRequested == true ? "Retry stop" : "Resume generation") { generation.resume() }.buttonStyle(.borderedProminent).accessibilityIdentifier("resume-generation")
-                        }
-                        if generation.pending?.phase == "failed" {
-                            Button("Retry generation") { generation.retryFailedRun() }
-                                .buttonStyle(.borderedProminent).accessibilityIdentifier("retry-generation")
-                            Button("Dismiss failed generation") { generation.forgetFailedRun() }
-                        }
-                    }
-                    if generation.pending != nil {
-                        Button("Stop generation", role: .destructive) { generation.stop() }
-                    }
-                }.padding(24)
-            }.navigationTitle("Astra").navigationBarTitleDisplayMode(.inline)
-                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { showActivity = false } } }
-        }.presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+        GenerationActivityView(generation: generation, onRetry: {
+            showActivity = false
+            withCADConnection { generation.retryFailedRun() }
+        })
     }
     private func generate() {
-        guard generation.connected else { showConnection = true; return }
         guard !prompt.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        withCADConnection { sendPrompt() }
+    }
+
+    /// The ordinary Connect dialog is the only approval flow. Keep the draft,
+    /// selection and drawing untouched until it succeeds and the turn is saved.
+    private func withCADConnection(_ action: @escaping @MainActor () -> Void) {
+        if generation.readyForCAD { action(); return }
+        guard connectionTask == nil else { return }
+        connectionTask = Task { @MainActor in
+            defer { connectionTask = nil }
+            do {
+                let credentials = try await authorization.connect(conversationID: project?.conversationID)
+                let client = NanocodexClient(credentials: credentials)
+                defer { client.close() }
+                try await client.validateConnection()
+                try Task.checkCancellation()
+                try ConnectionCredentials.save(credentials, projectID: project?.credentialProjectID)
+                generation.credentials = credentials
+                action()
+            } catch is CancellationError {
+            } catch { self.error = error.localizedDescription }
+        }
+    }
+
+    private func sendPrompt() {
         do {
             let step = try stepURL.map { try Data(contentsOf: $0) }
             if document != nil && step == nil {
@@ -293,7 +332,9 @@ struct WorkspaceView: View {
         } catch { self.error = error.localizedDescription }
     }
     private func importSTEP(_ data: Data, name: String) {
-        guard generation.connected else { pendingImport = (data, name); showConnection = true; return }
+        guard generation.readyForCAD else {
+            withCADConnection { importSTEP(data, name: name) }; return
+        }
         guard data.count <= 600_000, String(data: data, encoding: .utf8)?.contains("ISO-10303-21") == true else {
             error = "Choose a STEP text file smaller than 600 KB. Larger models can be prepared with the included desktop exporter."; return
         }

@@ -16,7 +16,8 @@ Describe a part, inspect its real STEP geometry, tap the exact faces or edges yo
 - A native SceneKit viewport: orbit, pan, zoom, fit, face picking, edge picking, and vertex picking. No WebView.
 - A topology inspector with exact face areas, edge lengths, and vertex coordinates in millimeters.
 - PencilKit pen, eraser, colors, undo, redo, and clear. Markup preserves its document revision and captured view across app launches and layout changes.
-- Astra generation through Nanocodex’s public managed HTTP API, streamed progress, explicit cancellation, persisted admission identifiers, and resumable event cursors.
+- A durable Astra agent and persistent Cloudflare CAD sandbox per project. Inputs upload before submission; completed STEP files remain in the cloud.
+- Plain-language progress with a tap-through conversation and expandable tool details. Projects, drafts, selections, drawings, and transcripts persist across relaunches.
 - Real STEP imports and exports. A pinned CAD kernel produces native mesh previews with the same geometry references used by [earthtojake/text-to-cad](https://github.com/earthtojake/text-to-cad).
 - A real, offline sample bracket, including its STEP, mesh preview, and reproducible source.
 
@@ -36,7 +37,7 @@ For a physical device, set your development team and enable code signing in Xcod
 
 ## Create with Astra
 
-Tap **Astra → Connect with Nanocodex**. NanoCAD embeds the existing Nanocodex Connect dialog in a native sheet. Approve ChatGPT/Astra, an isolated Cloudflare CAD sandbox, and the two CAD file tools for NanoCAD’s conversation. Existing text-only approvals show **Enable CAD creation**. The scoped connection stays in this device’s Keychain. Keep NanoCAD open during generation so its tools can exchange the selected STEP, markup, and generated files. An account key remains available under Advanced connection.
+Write a prompt and tap Send, or choose **Astra → Connect with Nanocodex**. NanoCAD opens the existing Nanocodex Connect dialog in a native sheet. Its normal approval includes the CAD execution capability. The scoped connection stays in this device’s Keychain; there is no separate CAD setup service. An account key remains available under Advanced connection.
 
 Write a prompt such as:
 
@@ -46,13 +47,15 @@ Or select one or more faces or edges and ask:
 
 > Round these edges with a 2 mm radius.
 
-Connect reuses its approved conversation, explicitly configured with `gpt-6-astra`; each generation has independent, persisted request and transfer identifiers. NanoCAD supplies the current STEP, exact revision and selected references, the bundled exporter, and an annotated image when present. Astra uses a Cloudflare sandbox with Python 3.12 and `cadgen==0.6.6` to produce real STEP and `.cad.json` artifacts. NanoCAD verifies the preview’s SHA-256 revision against the downloaded STEP before replacing the current model. Python and the CAD kernel run in the agent’s execution environment; rendering and interaction run natively on iOS.
+Each project keeps a stable Connect conversation and agent, explicitly configured with `gpt-6-astra`. NanoCAD uploads the current STEP, exact revision, bundled exporter, and any annotated image before admitting a turn. Astra reuses that project’s Cloudflare sandbox with Python 3.12 and `cadgen==0.6.6`. The finished STEP and native preview are published as immutable files tied to that turn. The app verifies their hashes and matching geometry revision before replacing the model.
 
-If the connection is interrupted, open **Conversation → Resume generation**. Resume preserves the original request and turn identifiers. Stop explicitly cancels the server turn; closing the app merely stops observing it. If Astra finishes without delivering both model files, **Retry generation** starts a new turn with your original prompt and geometry.
+After the progress line says the job is working in the cloud, you can close NanoCAD. Returning reconnects automatically using the same saved request, turn, and event cursor. Stop explicitly cancels cloud work. An upload interrupted before submission continues when the app reopens; a request cannot run until its inputs reach the server. A failed generation can be retried with the original prompt and geometry.
+
+Use **Design menu → Projects** to return to a design, or **New design** to start a separate project. Switching projects preserves their jobs and drafts. Tap the progress line or conversation button for the retained transcript, with tool inputs/results behind Details. Large binary transfers and credential values are omitted from the transcript; any history/content retention limit is shown explicitly.
 
 ## Import existing CAD
 
-Use **+** or **Design menu → Open STEP or preview**. STEP/STP imports use Astra to tessellate the original geometry without remodeling it. Current session setup limits restrict an imported STEP to 600 KB; the total setup payload, including markup and exporter, must fit Nanocodex’s 1 MB configuration limit.
+Use **+** or **Design menu → Open STEP or preview**. STEP/STP imports use Astra to tessellate the original geometry without remodeling it. The current cloud upload limit is 600 KB per input file. Immutable publication currently supports 1 MB per output file; the preview exporter can use coarser tessellation without changing the STEP geometry.
 
 For larger models or offline viewing, export a preview on a computer:
 
@@ -68,7 +71,7 @@ Open `part.cad.json` in NanoCAD through Files. A preview imported by itself supp
 
 This is an initial native application, not the full desktop CAD Viewer. It supports leaf bodies and face/edge/vertex references, but not kinematic animation, engineering drawing PDFs, material editing, constraints, or on-device B-rep editing. Markup is a review of a captured camera view, not a constrained CAD sketch. Reference IDs belong to one saved STEP revision and are cleared after regeneration.
 
-Connect uses its own granted conversation and signed native CAD tools; it does not require managed `/files` or `/artifacts` access. No separate login server or callback service is deployed. One active generation is supported per workspace. Live Astra execution requires approving Connect; see [validation](docs/validation.md) for exactly what was exercised.
+Connect uses grant-scoped uploads and per-turn artifact downloads. It cannot read arbitrary account workspace files. One active generation is supported per project. Reliable completion notifications while the app is closed are not enabled: they require APNs registration, push-enabled signing, and a server publisher. See [validation](docs/validation.md) for the tested boundary.
 
 SceneKit provides a native renderer with Metal backing. Apple now [marks SceneKit deprecated](https://developer.apple.com/documentation/scenekit/); a future renderer can consume the same CAD document contract without changing generation or topology identity.
 

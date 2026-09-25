@@ -582,3 +582,98 @@ private final class HTTPFixtureProtocol: URLProtocol, @unchecked Sendable {
     }
     override func stopLoading() { /* Replies finish synchronously; there is no outstanding work. */ }
 }
+
+@MainActor
+final class DurableConnectHTTPTests: XCTestCase {
+    private let digest = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+    private func credentials() throws -> NanocodexCredentials {
+        try NanocodexCredentials(connect: .init(appID: ConnectConfiguration.appID,
+            appOrigin: ConnectConfiguration.appOrigin, grantID: "0x" + String(repeating: "a", count: 64),
+            agentID: "agent-fixture", token: String(repeating: "x", count: 43), expiresAt: Date().timeIntervalSince1970 + 3600,
+            conversationID: UUID().uuidString, toolCatalogDigest: try ConnectConfiguration.catalogDigest(), sandboxExecution: true))
+    }
+    private func configuration(_ exchange: HTTPExchange) -> URLSessionConfiguration {
+        let host = URL(string: ConnectConfiguration.apiOrigin)!.host!
+        HTTPFixtureProtocol.registry.insert(exchange, host: host)
+        addTeardownBlock { HTTPFixtureProtocol.registry.remove(host: host) }
+        let config = URLSessionConfiguration.ephemeral; config.protocolClasses = [HTTPFixtureProtocol.self]
+        return config
+    }
+    private var astra: HTTPReply { .json(#"{"settings":{"model":"gpt-6-astra","thinking":"high","reasoning_mode":"standard","fast_mode":false}}"#) }
+    private func body(_ request: URLRequest) throws -> [String: Any] {
+        try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(request.httpBody)) as? [String: Any])
+    }
+
+    func testRelaunchAfterAmbiguousAdmissionReusesUploadedBytesAndExactPromptWithoutNativeHost() async throws {
+        let credentials = try credentials(), grant = try XCTUnwrap(credentials.connect)
+        var generation = PendingGeneration(prompt: "Widen the selected edge", references: ["model.step#o1.e2"],
+            files: [.init(path: "/brain/input/model.step", data: Data("abc".utf8))], instructions: "Preserve hole centres.")
+        let inputPath = "/brain/connect/\(grant.grantID)/inputs/\(generation.creationID)/model.step"
+        let upload = HTTPReply.json("{\"path\":\"\(inputPath)\",\"size\":3,\"sha256\":\"\(digest)\"}")
+        let exchange = HTTPExchange(replies: [astra, upload, .failure(.networkConnectionLost), upload,
+            .json("{\"turn_id\":\"\(generation.turnID)\"}")])
+        let config = configuration(exchange)
+        let first = DurableConnectCADClient(credentials: credentials, configuration: config)
+        try await first.prepare(generation)
+        let agent = try await first.createAgent(requestID: generation.creationID, inputFiles: generation.files.map { .init(path: $0.path, data: $0.data) }, instructions: generation.instructions)
+        XCTAssertEqual(agent, grant.agentID)
+        do {
+            _ = try await first.send(agentID: agent, prompt: generation.prompt, references: generation.references, revision: nil,
+                requestID: generation.requestID, turnID: generation.turnID)
+            XCTFail("Admission fixture must lose its response")
+        } catch let error as URLError { XCTAssertEqual(error.code, .networkConnectionLost) }
+        first.close()
+        generation.agentID = agent; generation.phase = "sending"
+        let restored = DurableConnectCADClient(credentials: credentials, configuration: config); defer { restored.close() }
+        try await restored.prepare(generation)
+        _ = try await restored.send(agentID: agent, prompt: generation.prompt, references: generation.references, revision: nil,
+            requestID: generation.requestID, turnID: generation.turnID)
+        let uploads = exchange.requests.filter { $0.httpMethod == "PUT" }
+        let sends = exchange.requests.filter { $0.httpMethod == "POST" }
+        XCTAssertEqual(uploads.count, 2); XCTAssertEqual(sends.count, 2)
+        XCTAssertEqual(try body(uploads[0])["data_base64"] as? String, "YWJj")
+        XCTAssertEqual(uploads[0].httpBody, uploads[1].httpBody)
+        XCTAssertEqual(sends[0].httpBody, sends[1].httpBody)
+        XCTAssertEqual(sends[0].value(forHTTPHeaderField: "Idempotency-Key"), generation.requestID)
+        let prompt = try XCTUnwrap(body(sends[0])["input"] as? String)
+        XCTAssertTrue(prompt.contains(inputPath))
+        XCTAssertTrue(prompt.contains("/brain/connect/\(grant.grantID)/outputs/\(generation.turnID)/model.step"))
+        XCTAssertFalse(exchange.requests.contains { $0.url?.path.contains("tool-host") == true })
+    }
+
+    func testWrongUploadReceiptNeverAdmitsTurn() async throws {
+        let credentials = try credentials()
+        let generation = PendingGeneration(prompt: "Create", references: [], files: [.init(path: "/brain/input/model.step", data: Data("abc".utf8))], instructions: "")
+        let exchange = HTTPExchange(replies: [astra, .json("{\"path\":\"/brain/input/\(generation.creationID)/model.step\",\"size\":4,\"sha256\":\"\(digest)\"}")])
+        let client = DurableConnectCADClient(credentials: credentials, configuration: configuration(exchange)); defer { client.close() }
+        try await client.prepare(generation)
+        do {
+            _ = try await client.createAgent(requestID: generation.creationID, inputFiles: generation.files.map { .init(path: $0.path, data: $0.data) }, instructions: "")
+            XCTFail("Mismatched upload receipt accepted")
+        } catch NanocodexError.integrityFailure { }
+        XCTAssertFalse(exchange.requests.contains { $0.httpMethod == "POST" })
+    }
+
+    func testCompletedCloudRecoveryNeverUploadsOrOpensPhoneFileHost() async throws {
+        let credentials = try credentials(), grant = try XCTUnwrap(credentials.connect)
+        var generation = PendingGeneration(prompt: "Create", references: [], files: [], instructions: "")
+        generation.agentID = grant.agentID; generation.phase = "downloading"
+        let path = "/brain/connect/\(grant.grantID)/outputs/\(generation.turnID)/model.step"
+        let artifact = String(repeating: "a", count: 64)
+        let exchange = HTTPExchange(replies: [.json("""
+            {"data":[{"id":"\(artifact)","turn_id":"\(generation.turnID)","path":"\(path)","digest":"\(digest)","size":3},
+            {"id":"\(artifact)","turn_id":"other","path":"\(path)","digest":"\(digest)","size":3}],
+            "publications":[{"turn_id":"\(generation.turnID)","state":"ready","error":null}]}
+            """), .bytes(Data("abc".utf8))])
+        let client = DurableConnectCADClient(credentials: credentials, configuration: configuration(exchange)); defer { client.close() }
+        try await client.prepare(generation)
+        let local = try await client.localResult(agentID: grant.agentID, turnID: generation.turnID)
+        XCTAssertNil(local)
+        let page = try await client.artifacts(agentID: grant.agentID, turnID: generation.turnID)
+        XCTAssertEqual(page.data.count, 1)
+        let downloaded = try await client.download(agentID: grant.agentID, artifact: XCTUnwrap(page.data.first))
+        defer { try? FileManager.default.removeItem(at: downloaded) }
+        XCTAssertEqual(try Data(contentsOf: downloaded), Data("abc".utf8))
+        XCTAssertTrue(exchange.requests.allSatisfy { $0.httpMethod == "GET" && $0.url?.path.contains("/artifacts") == true })
+    }
+}

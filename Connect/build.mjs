@@ -4,6 +4,8 @@ import path from 'node:path';
 import { authorizationCatalog } from './src/catalog.mjs';
 const manifest=JSON.parse(await readFile('../Resources/connect-tool-catalog.json'));
 const {digest}=await authorizationCatalog(manifest);
+// The local tsconfig.json pins this entry point's compiler options without
+// overriding dependency packages' configs or inheriting an ancestor config.
 const result = await build({entryPoints:['src/main.mjs'],outfile:'../Resources/connect.js',bundle:true,platform:'browser',format:'iife',target:'safari17',minify:true,sourcemap:false,legalComments:'eof',metafile:true,logLevel:'warning'});
 const roots = new Set();
 for (const input of Object.keys(result.metafile.inputs)) {

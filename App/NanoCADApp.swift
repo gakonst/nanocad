@@ -3,15 +3,33 @@ import SwiftUI
 @main
 struct NanoCADApp: App {
     @State private var validation = ConnectValidationRunner()
-    private let validationMode = ConnectValidationRunner.Mode.requested
+    @State private var projects = CADProjectStore()
+    @State private var showProjects = false
+    @State private var projectError: String?
+    @State private var validationMode = ConnectValidationRunner.Mode.requested
 
     var body: some Scene {
         WindowGroup {
-            if let validationMode {
-                ConnectValidationView(runner: validation, mode: validationMode)
-            } else {
-                WorkspaceView()
+            Group {
+                if let validationMode {
+                    ConnectValidationView(runner: validation, mode: validationMode, onDone: { self.validationMode = nil })
+                } else if let project = projects.activeProject {
+                    WorkspaceView(project: project, root: projects.root(for: project),
+                        onProjects: { showProjects = true }, onNewProject: {
+                            do { _ = try projects.create() } catch { projectError = error.localizedDescription }
+                        })
+                        .id(project.id)
+                } else { ProgressView("Opening your projects…") }
             }
+            .task {
+                do { try projects.load() } catch { projectError = error.localizedDescription }
+            }
+            .sheet(isPresented: $showProjects) {
+                ProjectsView(store: projects, onSelect: { _ in showProjects = false })
+            }
+            .alert("Couldn’t open project", isPresented: Binding(get: { projectError != nil }, set: { if !$0 { projectError = nil } })) {
+                Button("OK", role: .cancel) { projectError = nil }
+            } message: { Text(projectError ?? "") }
         }
     }
 }
@@ -21,6 +39,7 @@ struct NanoCADApp: App {
 private struct ConnectValidationView: View {
     let runner: ConnectValidationRunner
     let mode: ConnectValidationRunner.Mode
+    var onDone: () -> Void
     @StateObject private var viewport = ViewportController()
     @State private var selection = Set<String>()
 
@@ -45,6 +64,11 @@ private struct ConnectValidationView: View {
                 ProgressView()
                 Button("Cancel validation", role: .destructive) { runner.stop() }
                     .accessibilityIdentifier("cancel-connect-validation")
+            }
+            if !runner.running, runner.report?.finishedAt != nil {
+                Button("Return to NanoCAD", action: onDone)
+                    .buttonStyle(.borderedProminent)
+                    .accessibilityIdentifier("finish-connect-validation")
             }
             if let document = runner.document {
                 CADViewport(document: document, mode: .face, selection: $selection, controller: viewport)

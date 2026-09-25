@@ -22,6 +22,7 @@ private actor GenerationFixture: GenerationClient {
     var disconnectFirstStream = false
     var holdCreate = false
     var missingLocalOutput = false
+    var scriptedEvents: [NanocodexEvent]?
     var createWaiter: CheckedContinuation<Void, Never>?
     var page: NanocodexArtifactPage
     var output: [String: Data]
@@ -35,6 +36,7 @@ private actor GenerationFixture: GenerationClient {
     func configure(failSend: Bool = false, disconnect: Bool = false, hold: Bool = false) {
         failFirstSend = failSend; disconnectFirstStream = disconnect; holdCreate = hold
     }
+    func configureEvents(_ events: [NanocodexEvent]) { scriptedEvents = events }
     func configureMissingLocalOutput() { missingLocalOutput = true }
     func localResult(agentID: String, turnID: String) async throws -> (preview: Data, step: Data)? {
         if missingLocalOutput { throw NanocodexError.missingCADOutput }; return nil
@@ -52,6 +54,10 @@ private actor GenerationFixture: GenerationClient {
     }
     func events(agentID: String, after: String, untilTurnID: String?, receive: @escaping @Sendable (NanocodexEvent) async -> Void) async throws {
         cursors.append(after)
+        if let scriptedEvents {
+            for event in scriptedEvents { await receive(event) }
+            return
+        }
         if disconnectFirstStream && cursors.count == 1 {
             await receive(.init(cursor: "9007199254740993", turnID: untilTurnID, type: "assistant.delta", text: "Working", toolName: nil))
             throw NanocodexError.streamEnded
@@ -131,6 +137,51 @@ final class GenerationTests: XCTestCase {
         let cursors = await fixture.cursors, keys = await fixture.sendKeys
         XCTAssertEqual(cursors, ["0", "9007199254740993"]); XCTAssertTrue(keys.isEmpty)
         XCTAssertNil(restored.pending)
+    }
+
+    func testVisibleTranscriptSurvivesCompletedRunClearAndRelaunch() async throws {
+        let root = try directory(), fixture = try GenerationFixture(step: Data("STEP-one".utf8))
+        await fixture.configureEvents([
+            .init(cursor: "1", turnID: "turn-fixture", type: "assistant.delta", text: "Reading ", toolName: nil, itemID: "update", modelCallIndex: 1, phase: "commentary"),
+            .init(cursor: "1", turnID: "turn-fixture", type: "assistant.delta", text: "Reading ", toolName: nil, itemID: "update", modelCallIndex: 1, phase: "commentary"),
+            .init(cursor: "2", turnID: "turn-fixture", type: "assistant.message", text: "Reading the model.", toolName: nil, itemID: "update", modelCallIndex: 1, phase: "commentary"),
+            .init(cursor: "3", turnID: "turn-fixture", type: "tool.call", text: "", toolName: "exec_command", callID: "call-1", arguments: "python model.py"),
+            .init(cursor: "4", turnID: "turn-fixture", type: "tool.result", text: "", toolName: "exec_command", callID: "call-1", result: "Model exported", toolStatus: "completed"),
+            .init(cursor: "5", turnID: "turn-fixture", type: "assistant.message", text: "Saved", toolName: nil, itemID: "final", modelCallIndex: 2, phase: "final_answer"),
+            .init(cursor: "6", turnID: "turn-fixture", type: "turn_completed", text: "Saved", toolName: nil)
+        ])
+        try seed(pending("running"), at: root)
+        let value = try controller(root, fixture)
+        value.onResult = { _, _ in }
+        value.resume(); try await idle(value)
+        XCTAssertNil(value.pending)
+        XCTAssertEqual(value.statusSummary, "Model ready")
+        XCTAssertEqual(value.transcript.map(\.kind), [.user, .commentary, .toolCall, .toolResult, .final, .notice])
+        XCTAssertEqual(value.transcript.filter { $0.kind == .commentary }.map(\.text), ["Reading the model."])
+        let restored = try controller(root, fixture)
+        XCTAssertNil(restored.pending)
+        XCTAssertEqual(restored.transcript, value.transcript)
+        XCTAssertEqual(restored.response, "Saved")
+    }
+
+    func testServerFailureNeverBecomesModelReadyAndRemainsAfterDismissal() async throws {
+        let root = try directory(), fixture = try GenerationFixture(step: Data("STEP-one".utf8))
+        await fixture.configureEvents([
+            .init(cursor: "1", turnID: "turn-fixture", type: "tool.result", text: "", toolName: "exec_command", result: "Invalid geometry", toolStatus: "error"),
+            .init(cursor: "2", turnID: "turn-fixture", type: "turn_failed", text: "The model failed validation.", toolName: nil)
+        ])
+        try seed(pending("running"), at: root)
+        let value = try controller(root, fixture)
+        value.onResult = { _, _ in XCTFail("A failed turn cannot deliver a model") }
+        value.resume(); try await idle(value)
+        XCTAssertEqual(value.pending?.phase, "failed")
+        XCTAssertEqual(value.statusSummary, "Generation failed")
+        XCTAssertTrue(value.transcript.contains { $0.kind == .toolResult && $0.isError })
+        value.forgetFailedRun()
+        XCTAssertNil(value.pending)
+        let restored = try controller(root, fixture)
+        XCTAssertEqual(restored.transcript, value.transcript)
+        XCTAssertTrue(restored.transcript.contains { $0.kind == .error && $0.text.contains("failed validation") })
     }
 
     func testStopDuringCreationJoinsReceiptAndNeverSendsTurn() async throws {
