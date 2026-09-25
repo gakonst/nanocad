@@ -16,7 +16,7 @@ Coverage includes:
 
 An earlier run exposed unsigned-simulator Keychain access and two transcript/status regressions. Simulator ad-hoc signing and the affected behavior were corrected before the complete passing run. No failed or interrupted run is counted as a pass.
 
-The final Release build (0.4.0, build 6) passes and was installed successfully on the paired physical iPhone. iOS rejected the follow-up test launch because the device was locked; no new generation was admitted by that launch. See the live boundary below before interpreting a build as proof of cloud execution.
+Release 0.4.0 builds 6 and 7 were built and installed on the paired physical iPhone. Build 7 moves the pinned skill installation to local sandbox disk after the live check exposed costly small-file writes on shared storage. The public CI run for commit 828ba29 passed all jobs. See the live boundary below before interpreting a build as proof of cloud execution.
 
 ## CAD geometry and Connect bundle
 
@@ -38,9 +38,11 @@ Separately, the unchanged exporter ran in a real Cloudflare sandbox with Python 
 
 Two real physical iPhone edits completed through the project’s scoped Cloudflare sandbox: a Ø24 upright opening became a 24 × 24 square, then both Ø10 base holes became 10 × 10 squares. The latter saved a valid 63,664-byte STEP with 20 faces; the downloaded native preview matched SHA-256 `0cc07c32843515cefd5c1919c053f0256e50a3d6c563077e71d3e0c4c3c81100`. These prove cloud generation and final delivery, before the specialist/preview update.
 
-A physical-device run that closes NanoCAD after the new durable submission and reopens its finished CAD result is still pending an unlocked-device run. Do not infer that result from the tests above. Remote completion notifications, TestFlight distribution, hardware Apple Pencil behavior and large-assembly performance are not established.
+A new unchanged re-export was admitted on the physical phone, then NanoCAD was terminated. Work continued during the five-minute closed interval. The app was reopened before the server finished; the server subsequently retained a completed turn with final STEP/preview and a checkpoint. A stale process-session error required recovery. The phone relocked before final native download verification. Completion entirely while terminated followed by verified delivery on reopen is still pending. Do not infer that result from the tests above. Remote completion notifications, TestFlight distribution, hardware Apple Pencil behavior and large-assembly performance are not established.
 
 Earlier renderer evidence remains available: [iPhone workspace](images/workspace.png), [face selection](images/selection.png), [markup](images/markup.png), [iPad workspace](images/ipad.png), the [project drawer with a real model thumbnail](images/projects-drawer.png), and the separate [Astra geometry workflow](astra-workflow.md).
+
+The separate [post-change specialist validation](post-change-validation.md) records measured CAD stage times, saved geometry checks and the native rendering review.
 
 ## Reproduce
 
