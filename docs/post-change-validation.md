@@ -24,3 +24,7 @@ The generated pair was subsequently loaded as an isolated native simulator fixtu
 STEP SHA-256: `d578b1e72d105eb84875551134256c7516de5e128952014429667355d0327f9e` (44,346 bytes). Native preview: 63,356 bytes, 14 faces.
 
 The separate cadgen snapshot attempt failed because its Chromium download was denied and its expected browser was absent. The native review above succeeded; the cadgen snapshot path remains unverified. Physical Connect evidence and its remaining close/reopen boundary are recorded in [validation](validation.md).
+
+## Signed device close/reopen boundary
+
+A later fresh, unchanged re-export with build 7 and the installed specialist completed in the persistent cloud turn while the physical app was terminated. After launch, NanoCAD resumed the same turn and saved the verified 63,664-byte STEP/native-preview pair. The server-reported stage times were 13.74 s input verification, 20.59 s environment restoration, 2.61 s skill installation, 4.29 s staging, 23.89 s geometry validation, 32.96 s preview/checkpoint export, 18.92 s checkpoint validation, 21.82 s final copy/validation, and 3.90 s project metadata. These are tool-reported stages, not total wall-clock latency or a before/after benchmark. The geometry was deliberately unchanged, so this does not validate a new post-update geometry-changing interaction. See [validation](validation.md).
