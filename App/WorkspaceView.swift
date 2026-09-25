@@ -32,9 +32,15 @@ struct WorkspaceView: View {
         }
         .preferredColorScheme(.dark)
         .tint(.teal)
-        .task { loadWorkspace(); generation.onResult = { data, step in
-            replaceDocument(try persistence.saveDocument(data, step: step)); stepURL = persistence.stepURL
-        } }
+        .task {
+            loadWorkspace()
+            generation.onResult = { data, step in
+                replaceDocument(try persistence.saveDocument(data, step: step)); stepURL = persistence.stepURL
+            }
+            // A completed turn can finish local artifact recovery immediately.
+            // This never admits a new prompt or replays a terminal turn.
+            if generation.pending?.phase == "downloading" { generation.resume() }
+        }
         .onChange(of: generation.error) { _, value in if let value { error = value; generation.error = nil } }
         .onChange(of: selection) { _, _ in saveReview() }
         .onChange(of: prompt) { _, _ in saveReview() }
@@ -249,6 +255,8 @@ struct WorkspaceView: View {
                             Button(generation.pending?.stopRequested == true ? "Retry stop" : "Resume generation") { generation.resume() }.buttonStyle(.borderedProminent).accessibilityIdentifier("resume-generation")
                         }
                         if generation.pending?.phase == "failed" {
+                            Button("Retry generation") { generation.retryFailedRun() }
+                                .buttonStyle(.borderedProminent).accessibilityIdentifier("retry-generation")
                             Button("Dismiss failed generation") { generation.forgetFailedRun() }
                         }
                     }

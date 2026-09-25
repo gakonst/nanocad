@@ -21,6 +21,7 @@ private actor GenerationFixture: GenerationClient {
     var failFirstSend = false
     var disconnectFirstStream = false
     var holdCreate = false
+    var missingLocalOutput = false
     var createWaiter: CheckedContinuation<Void, Never>?
     var page: NanocodexArtifactPage
     var output: [String: Data]
@@ -33,6 +34,10 @@ private actor GenerationFixture: GenerationClient {
     }
     func configure(failSend: Bool = false, disconnect: Bool = false, hold: Bool = false) {
         failFirstSend = failSend; disconnectFirstStream = disconnect; holdCreate = hold
+    }
+    func configureMissingLocalOutput() { missingLocalOutput = true }
+    func localResult(agentID: String, turnID: String) async throws -> (preview: Data, step: Data)? {
+        if missingLocalOutput { throw NanocodexError.missingCADOutput }; return nil
     }
     func releaseCreate() { createWaiter?.resume(); createWaiter = nil }
     func createAgent(requestID: String, inputFiles: [NanocodexInputFile], instructions: String) async throws -> String {
@@ -156,6 +161,27 @@ final class GenerationTests: XCTestCase {
         value.resume(); try await idle(value)
         let keys = await fixture.sendKeys, cancellations = await fixture.cancels
         XCTAssertTrue(keys.isEmpty); XCTAssertEqual(cancellations, 1); XCTAssertNil(value.pending)
+    }
+
+    func testTextOnlyCompletionCanRetryWithoutReplacingWorkspaceOrRepeatingTheFinishedTurn() async throws {
+        let root = try directory(), fixture = try GenerationFixture(step: Data("original".utf8))
+        await fixture.configureMissingLocalOutput()
+        let original = pending("running")
+        try seed(original, at: root)
+        let value = try controller(root, fixture)
+        value.onResult = { _, _ in XCTFail("A text-only response must not replace geometry") }
+        value.resume(); try await idle(value)
+        XCTAssertEqual(value.pending?.phase, "failed")
+        XCTAssertNotNil(value.error)
+        XCTAssertTrue(try JSONDecoder().decode(PendingGeneration.self, from: Data(contentsOf: root.appending(path: "generation.json"))).phase == "failed")
+        value.retryFailedRun(); try await idle(value)
+        XCTAssertNotEqual(value.pending?.turnID, original.turnID)
+        XCTAssertNotEqual(value.pending?.requestID, original.requestID)
+        XCTAssertEqual(value.pending?.prompt, original.prompt)
+        XCTAssertEqual(value.pending?.references, original.references)
+        let sends = await fixture.turnIDs
+        XCTAssertEqual(sends.count, 1)
+        XCTAssertNotEqual(sends.first, original.turnID)
     }
 
     func testMissingPublishedPairDoesNotUseUnpublishedWorkspaceFiles() async throws {

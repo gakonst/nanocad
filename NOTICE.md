@@ -11,3 +11,5 @@ CAD kernel dependencies run in the Python execution environment and are not link
 - Open CASCADE Technology — LGPL-2.1 with its additional exception.
 
 See [exporter documentation](docs/exporter.md) for upstream license links and the exact tested package versions. Preserve their license terms when redistributing those dependencies.
+
+`Resources/connect.js` bundles the public **nanocodex 0.6.5** Connect SDK (MIT OR Apache-2.0; NanoCAD uses the MIT option). Its Nanocodex license is reproduced in `docs/NANOCODEX-LICENSE-MIT.txt`; bundled dependency licenses are included in `Resources/connect-licenses.txt`. The production sign-in dialog is loaded from Nanocodex and is not copied into this repository.

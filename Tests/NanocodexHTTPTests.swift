@@ -78,12 +78,33 @@ final class NanocodexHTTPTests: XCTestCase {
     }
 
     func testSelectingAstraUsesSettingsPatch() async throws {
-        let fixture = try HTTPFixture([.json(#"{"settings":{"model":"gpt-6-astra","thinking":"high","reasoning_mode":"standard","fast_mode":false}}"#)])
+        let fixture = try HTTPFixture([.json(#"{"settings":{"model":"gpt-6-sol","thinking":"medium","reasoning_mode":"standard","fast_mode":false}}"#), .json(#"{"settings":{"model":"gpt-6-astra","thinking":"high","reasoning_mode":"standard","fast_mode":false}}"#)])
+        defer { fixture.close() }
+        try await fixture.client.selectAstra(agentID: agentID)
+        XCTAssertEqual(fixture.requests.count, 2)
+        assertRequest(fixture.requests[0], fixture: fixture, method: "GET", path: "/v1/agents/\(agentID)")
+        let request = fixture.requests[1]
+        assertRequest(request, fixture: fixture, method: "PATCH", path: "/v1/agents/\(agentID)/settings")
+        assertAstra(try object(request))
+    }
+
+    func testExistingAstraConversationDoesNotPatchLockedModel() async throws {
+        let fixture = try HTTPFixture([.json(#"{"accepted_turns":3,"settings":{"model":"gpt-6-astra","thinking":"high","reasoning_mode":"standard","fast_mode":false}}"#)])
         defer { fixture.close() }
         try await fixture.client.selectAstra(agentID: agentID)
         let request = try XCTUnwrap(fixture.requests.only)
-        assertRequest(request, fixture: fixture, method: "PATCH", path: "/v1/agents/\(agentID)/settings")
-        assertAstra(try object(request))
+        assertRequest(request, fixture: fixture, method: "GET", path: "/v1/agents/\(agentID)")
+    }
+
+    func testExistingAstraEffortUpdateOmitsImmutableSettings() async throws {
+        let fixture = try HTTPFixture([.json(#"{"accepted_turns":3,"settings":{"model":"gpt-6-astra","thinking":"medium","reasoning_mode":"standard","fast_mode":true}}"#), .json("{}")])
+        defer { fixture.close() }
+        try await fixture.client.selectAstra(agentID: agentID)
+        XCTAssertEqual(fixture.requests.count, 2)
+        let patch = try object(fixture.requests[1])
+        XCTAssertEqual(Set(patch.keys), ["thinking", "fast_mode"])
+        XCTAssertEqual(patch["thinking"] as? String, "high")
+        XCTAssertEqual(patch["fast_mode"] as? Bool, false)
     }
 
     func testTurnReceiptAndSelectionContextPreserveStableIdentifiers() async throws {

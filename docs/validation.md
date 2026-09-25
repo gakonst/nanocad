@@ -37,6 +37,18 @@ xcodebuild -project NanoCAD.xcodeproj -scheme NanoCAD \
 .cadgen-venv/bin/python Tools/test_export_step.py
 ```
 
-## Not established by these tests
+## Connect and physical iPhone update — 2026-09-25
 
-A live, authenticated prompt-to-artifact round trip from the iOS app has **not** been run: no user account API key was supplied. The real adapter selects Astra and follows the inspected public API, with its wire behavior verified by transport tests. Device signing, TestFlight distribution, hardware Apple Pencil behavior, and large-assembly performance are not tested. Connect-based native sign-in is not implemented because current grants cannot read the required managed CAD files/artifacts.
+The public Connect SDK is bundled and its existing hosted SMS approval dialog runs inside the native WebKit sheet. The native app was signed, installed, and launched on an iPhone 17 Pro running iOS 26.6.1. A user-approved Connect conversation completed real Astra text generation.
+
+The updated simulator checks passed **53 distinct native tests and all seven UI scenarios** across the full run and a targeted follow-up. The new cases cover WebKit dialog loading/cancellation, scoped HTTP requests, transfer integrity and runtime identity, reuse of an immutable Astra model selection, and terminal runs that provide no CAD output. The full run passed 52 native tests and six UI cases; the topology case failed to resolve a visible row through accessibility. Its unchanged targeted rerun passed every body/face/edge/point selection and Clear assertion, together with the new runtime identity test. An earlier simulator install stall was interrupted before tests ran; neither failure was counted as a pass.
+
+A real physical iPhone transfer run completed at **2026-09-25 00:44:36 UTC**: Astra read a unique 78,973-byte input in chunks at offsets 0, 32,768 and 65,536, reconstructed it with real tools, and reported the exact native SHA-256. Native served-chunk receipts independently covered every byte. The final persisted validation state was `passed`, with no failures or stream reconnects. This proved input transfer through the approved Connect tools, not CAD output delivery.
+
+Separately, the unchanged exporter ran with cadgen 0.6.6/build123d 0.11.1 in a real Cloudflare sandbox using Python 3.12.11. The saved STEP reopened as one valid solid: a 40 × 30 × 8 mm plate with a centered Ø6 mm through-hole, volume 9,373.805328941526 mm³. Its matching native preview contained seven faces, fifteen edges, ten vertices and 352 triangles. This sandbox used the root account; it does not establish execution through a Connect grant.
+
+The opt-in device launch flags `--validate-connect-transfer` and `--validate-connect-cad` use the grant already in device Keychain. They isolate their files in `Documents/NanoCAD/Validation/<runUUID>/`, preserve the user's document, and save safe reports to `Validation/latest-report.json`. The CAD run requires the newly approved sandbox permission and verifies delivered STEP identity, preview decoding, exact dimensions and both hole boundaries before showing its native viewport.
+
+## Still to establish
+
+A live approved Connect → Cloudflare kernel → native STEP/preview delivery run is pending deployment of explicit sandbox permission and its approval in NanoCAD. TestFlight distribution, hardware Apple Pencil behavior, and large-assembly performance are not established by these checks. The earlier real Astra CAD smoke tests used a separate tool workflow, as documented above.

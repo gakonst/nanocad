@@ -36,7 +36,7 @@ For a physical device, set your development team and enable code signing in Xcod
 
 ## Create with Astra
 
-Tap **Astra** in the composer and enter a Nanocodex account API key from your Nanocodex account settings. The key stays in the device’s Keychain. There is no app-owned provider key or shared credential.
+Tap **Astra → Connect with Nanocodex**. NanoCAD embeds the existing Nanocodex Connect dialog in a native sheet. Approve ChatGPT/Astra, an isolated Cloudflare CAD sandbox, and the two CAD file tools for NanoCAD’s conversation. Existing text-only approvals show **Enable CAD creation**. The scoped connection stays in this device’s Keychain. Keep NanoCAD open during generation so its tools can exchange the selected STEP, markup, and generated files. An account key remains available under Advanced connection.
 
 Write a prompt such as:
 
@@ -46,9 +46,9 @@ Or select one or more faces or edges and ask:
 
 > Round these edges with a 2 mm radius.
 
-Each generation gets an isolated Nanocodex agent explicitly configured with `gpt-6-astra`. NanoCAD supplies the current STEP, exact revision and selected references, the bundled exporter, and an annotated image when present. Astra uses a native execution hand with `cadgen==0.6.6` to produce real STEP and `.cad.json` artifacts. NanoCAD verifies the preview’s SHA-256 revision against the downloaded STEP before replacing the current model. Python and the CAD kernel run in the agent’s execution environment; rendering and interaction run natively on iOS.
+Connect reuses its approved conversation, explicitly configured with `gpt-6-astra`; each generation has independent, persisted request and transfer identifiers. NanoCAD supplies the current STEP, exact revision and selected references, the bundled exporter, and an annotated image when present. Astra uses a Cloudflare sandbox with Python 3.12 and `cadgen==0.6.6` to produce real STEP and `.cad.json` artifacts. NanoCAD verifies the preview’s SHA-256 revision against the downloaded STEP before replacing the current model. Python and the CAD kernel run in the agent’s execution environment; rendering and interaction run natively on iOS.
 
-If the connection is interrupted, open **Conversation → Resume generation**. Resume preserves the original request and turn identifiers. Stop explicitly cancels the server turn; closing the app merely stops observing it.
+If the connection is interrupted, open **Conversation → Resume generation**. Resume preserves the original request and turn identifiers. Stop explicitly cancels the server turn; closing the app merely stops observing it. If Astra finishes without delivering both model files, **Retry generation** starts a new turn with your original prompt and geometry.
 
 ## Import existing CAD
 
@@ -68,7 +68,7 @@ Open `part.cad.json` in NanoCAD through Files. A preview imported by itself supp
 
 This is an initial native application, not the full desktop CAD Viewer. It supports leaf bodies and face/edge/vertex references, but not kinematic animation, engineering drawing PDFs, material editing, constraints, or on-device B-rep editing. Markup is a review of a captured camera view, not a constrained CAD sketch. Reference IDs belong to one saved STEP revision and are cleared after regeneration.
 
-Nanocodex Connect grants currently disallow managed `/files` and `/artifacts` reads; the native app therefore uses the supported account API key flow. One active generation is supported per workspace. Live account-backed Astra execution requires a valid user connection; see [validation](docs/validation.md) for exactly what was exercised.
+Connect uses its own granted conversation and signed native CAD tools; it does not require managed `/files` or `/artifacts` access. No separate login server or callback service is deployed. One active generation is supported per workspace. Live Astra execution requires approving Connect; see [validation](docs/validation.md) for exactly what was exercised.
 
 SceneKit provides a native renderer with Metal backing. Apple now [marks SceneKit deprecated](https://developer.apple.com/documentation/scenekit/); a future renderer can consume the same CAD document contract without changing generation or topology identity.
 

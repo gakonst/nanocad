@@ -1,0 +1,98 @@
+[
+  {
+    "provider": "javascript",
+    "remote_name": "nanocad_read_input",
+    "definition": {
+      "type": "function",
+      "name": "nanocad_read_input",
+      "description": "Read a bounded chunk of the current NanoCAD generation input. Only the selected STEP, markup image, and bundled exporter are available. Returns base64 bytes, size and SHA-256. Use Code Mode to transfer without printing file contents.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "generation_id": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "enum": [
+              "export_step.py",
+              "model.step",
+              "markup.jpg"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 32768
+          }
+        },
+        "required": [
+          "generation_id",
+          "file",
+          "offset",
+          "length"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parallel_safe": false,
+    "timeout_ms": 30000
+  },
+  {
+    "provider": "javascript",
+    "remote_name": "nanocad_write_output",
+    "definition": {
+      "type": "function",
+      "name": "nanocad_write_output",
+      "description": "Deliver one bounded chunk of a generated model.step or model.cad.json to NanoCAD. Use exact generation ID and SHA-256 of the entire saved file. Chunks are 32768 bytes except the last. Identical retries are safe; conflicting bytes are rejected.",
+      "strict": false,
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "generation_id": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string",
+            "enum": [
+              "model.step",
+              "model.cad.json"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 80000000
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "data_base64": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "generation_id",
+          "file",
+          "offset",
+          "total_size",
+          "sha256",
+          "data_base64"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parallel_safe": false,
+    "timeout_ms": 30000
+  }
+]

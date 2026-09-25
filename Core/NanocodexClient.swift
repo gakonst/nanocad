@@ -2,12 +2,23 @@ import Foundation
 import CryptoKit
 
 /// Native adapter for the public managed HTTP API. Model execution remains on Nanocodex.
-/// Connect grants cannot currently read /files or /artifacts; this adapter uses an account API key.
+/// Connect uses its granted agent; CAD file exchange travels through the signed app tools.
 struct NanocodexCredentials: Codable, Equatable, Sendable {
     var origin: String
     var apiKey: String
+    var connect: NanocodexConnectGrant?
 
-    init(origin: String = "https://nanocodex.xyz", apiKey: String) throws {
+    init(connect: NanocodexConnectGrant) throws {
+        try ConnectConfiguration.validate(connect)
+        origin = ConnectConfiguration.apiOrigin; apiKey = ""; self.connect = connect
+    }
+
+    func validated() throws -> Self {
+        if let connect { return try Self(connect: connect) }
+        return try Self(origin: origin, apiKey: apiKey)
+    }
+
+    init(origin: String = "https://nanocodex.gakonst.workers.dev", apiKey: String) throws {
         let value = origin.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let url = URL(string: value), url.scheme == "https", url.host != nil,
               url.user == nil, url.password == nil, url.query == nil, url.fragment == nil,
@@ -23,7 +34,7 @@ struct NanocodexCredentials: Codable, Equatable, Sendable {
 
 enum NanocodexError: LocalizedError, Sendable {
     case invalidOrigin, invalidCredential, invalidResponse, invalidReference, inputTooLarge
-    case http(Int), publication(String), streamEnded, integrityFailure
+    case http(Int), publication(String), streamEnded, integrityFailure, missingCADOutput
     var errorDescription: String? {
         switch self {
         case .invalidOrigin: "Enter an HTTPS server origin without a path or query."
@@ -36,6 +47,7 @@ enum NanocodexError: LocalizedError, Sendable {
         case .http(let code): "Nanocodex returned HTTP \(code)."
         case .publication(let message): message
         case .streamEnded: "The progress stream disconnected. Reconnect to resume the existing turn."
+        case .missingCADOutput: "Astra finished without delivering a complete model. Your current design is unchanged. Retry the generation to create the CAD files."
         case .integrityFailure: "The downloaded file did not match its published digest."
         }
     }
@@ -109,11 +121,33 @@ final class NanocodexClient: Sendable {
     func close() { session.invalidateAndCancel() }
 
     /// Read-only connection check; never starts a model or creates a thread.
-    func validateConnection() async throws { _ = try await data(path: "/v1/agents") }
+    func validateConnection() async throws {
+        guard let grant = credentials.connect else { _ = try await data(path: "/v1/agents"); return }
+        try ConnectConfiguration.validate(grant)
+        let bytes = try await data(path: "/v1/grants/" + grant.grantID)
+        guard let wire = try JSONSerialization.jsonObject(with: bytes) as? [String: Any],
+              let value = wire["grant"] as? [String: Any], value["status"] as? String == "active",
+              value["id"] as? String == grant.grantID,
+              wire["agent_id"] as? String == grant.agentID,
+              value["app_tool_catalog_digest"] as? String == grant.toolCatalogDigest,
+              value["conversation_id"] as? String == grant.conversationID,
+              let capabilities = value["capabilities"] as? [String],
+              Set(["chatgpt", "agent.output.final", "agent.output.actions", "agent.history.read", "agent.trace.read"]).isSubset(of: Set(capabilities)),
+              grant.sandboxExecution != true || capabilities.contains("agent.execution.sandbox"),
+              let expires = value["expires_at"] as? Double, expires > Date().timeIntervalSince1970 else {
+            throw ConnectError.invalidCallback
+        }
+    }
+
+    func revokeConnection() async throws {
+        guard let grant = credentials.connect else { return }
+        _ = try await data(path: "/v1/grants/" + grant.grantID + "/revoke", method: "POST")
+    }
 
     /// Persist requestID before admission. Reuse it with IDENTICAL input on retry.
     /// Files are uploaded through documented creation environment files, not the image/video-only attachment route.
     func createAgent(requestID: String, inputFiles: [NanocodexInputFile] = [], instructions: String = "") async throws -> String {
+        guard credentials.connect == nil else { throw NanocodexError.invalidReference }
         try Self.validateRequestID(requestID)
         var files: [[String: String]] = []
         var setup: [String] = []
@@ -151,9 +185,22 @@ final class NanocodexClient: Sendable {
     }
 
     func selectAstra(agentID: String) async throws {
-        _ = try await object(path: Self.agentPath(agentID) + "/settings", method: "PATCH", body: [
-            "model": "gpt-6-astra", "thinking": "high", "reasoning_mode": "standard", "fast_mode": false
-        ])
+        let path = try Self.agentPath(agentID)
+        let bytes = try await data(path: path)
+        guard let state = try JSONSerialization.jsonObject(with: bytes) as? [String: Any],
+              let settings = state["settings"] as? [String: Any],
+              let model = settings["model"] as? String,
+              let reasoning = settings["reasoning_mode"] as? String else { throw NanocodexError.invalidResponse }
+        // Model and reasoning mode become immutable after the first accepted turn.
+        // A reused Connect conversation must verify them, never resubmit them.
+        if model == "gpt-6-astra" && reasoning == "standard" {
+            if settings["thinking"] as? String == "high" && settings["fast_mode"] as? Bool == false { return }
+            _ = try await object(path: path + "/settings", method: "PATCH", body: ["thinking": "high", "fast_mode": false])
+        } else {
+            _ = try await object(path: path + "/settings", method: "PATCH", body: [
+                "model": "gpt-6-astra", "thinking": "high", "reasoning_mode": "standard", "fast_mode": false
+            ])
+        }
     }
 
     /// Selection references are already scoped to the displayed STEP revision; they are context, never executable code.
@@ -237,13 +284,27 @@ final class NanocodexClient: Sendable {
         return local
     }
 
-    private func request(path: String, method: String = "GET", body: Data? = nil, key: String? = nil) throws -> URLRequest {
+    func request(path originalPath: String, method: String = "GET", body: Data? = nil, key: String? = nil) throws -> URLRequest {
+        var path = originalPath
+        if let grant = credentials.connect {
+            let agentPrefix = "/v1/agents/" + grant.agentID
+            let grantPrefix = "/v1/grants/" + grant.grantID
+            if path == agentPrefix || path.hasPrefix(agentPrefix + "/") {
+                path = grantPrefix + "/agents/" + grant.agentID + path.dropFirst(agentPrefix.count)
+            } else if !(path == grantPrefix || path == grantPrefix + "/revoke") {
+                throw NanocodexError.invalidReference
+            }
+        }
         guard path.hasPrefix("/v1/"), !path.contains("#"), let url = URL(string: credentials.origin + path) else {
             throw NanocodexError.invalidReference
         }
         var request = URLRequest(url: url)
         request.httpMethod = method; request.httpBody = body
-        request.setValue("Bearer " + credentials.apiKey, forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer " + (credentials.connect?.token ?? credentials.apiKey), forHTTPHeaderField: "Authorization")
+        if let grant = credentials.connect {
+            request.setValue(grant.appID, forHTTPHeaderField: "X-Nanocodex-App-ID")
+            request.setValue(grant.appOrigin, forHTTPHeaderField: "Origin")
+        }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         if let key { request.setValue(key, forHTTPHeaderField: "Idempotency-Key") }

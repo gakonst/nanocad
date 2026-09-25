@@ -151,12 +151,17 @@ final class NanoCADUITests: XCTestCase {
     }
 
     @MainActor
-    func testConnectionRequiresAnAccountKeyWithoutPrefillingCredentials() {
+    func testConnectIsPrimaryAndAdvancedCredentialsStayHidden() {
         let app = launchFreshSample()
         defer { attachScreenshot(app, named: "connection-final") }
         let connection = app.buttons.matching(NSPredicate(format: "label IN %@", ["Connect Astra", "Astra connected"])).firstMatch
         connection.tap()
         XCTAssertTrue(app.navigationBars["Connect"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.buttons["connect-nanocodex"].isEnabled)
+        XCTAssertFalse(app.secureTextFields["nanocodex-api-key"].exists)
+        attachScreenshot(app, named: "native-connect-primary")
+        app.buttons["Advanced connection"].tap()
+        app.swipeUp()
         let key = app.secureTextFields["nanocodex-api-key"]
         XCTAssertTrue(key.exists, "The account key must use a native secure field.")
         let initialValue = key.value as? String ?? ""
@@ -173,6 +178,26 @@ final class NanoCADUITests: XCTestCase {
         app.navigationBars["Connect"].buttons["Cancel"].tap()
         XCTAssertTrue(viewport(in: app).waitForExistence(timeout: 3))
         XCTAssertFalse(app.secureTextFields["nanocodex-api-key"].exists)
+    }
+
+    @MainActor
+    func testConnectDialogOpensAndCancelRestoresWorkspace() {
+        let app = launchFreshSample()
+        app.buttons["Connect Astra"].tap()
+        app.buttons["connect-nanocodex"].tap()
+        XCTAssertTrue(app.navigationBars["Nanocodex Connect"].waitForExistence(timeout: 5))
+        let web = app.webViews.firstMatch
+        XCTAssertTrue(web.waitForExistence(timeout: 15))
+        // Wait for the actual hosted dialog's account action, not just a WebView shell.
+        let signIn = web.buttons["Text me a code"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: 25))
+        attachScreenshot(app, named: "embedded-connect-dialog")
+        app.navigationBars["Nanocodex Connect"].buttons["Cancel"].tap()
+        XCTAssertTrue(app.buttons["connect-nanocodex"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["connect-nanocodex"].isEnabled)
+        XCTAssertFalse(app.staticTexts["connection-error"].exists)
+        app.navigationBars["Connect"].buttons["Cancel"].tap()
+        waitForValue("11 faces, 0 selected", of: viewport(in: app))
     }
 
     private var localeArguments: [String] {

@@ -3,6 +3,20 @@ on:
   push:
   pull_request:
 jobs:
+  connect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: Connect/package-lock.json
+      - run: npm ci --ignore-scripts
+        working-directory: Connect
+      - run: npm test && npm run build
+        working-directory: Connect
+      - run: git diff --exit-code -- Resources/connect.js Resources/connect-licenses.txt
   geometry:
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +39,7 @@ jobs:
         run: |
           DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(v["udid"] for k,vs in d["devices"].items() if "iOS-26" in k for v in vs if "iPhone" in v["name"]))')
           echo "SIMULATOR_ID=$DEVICE" >> "$GITHUB_ENV"
-      - run: xcodebuild -project NanoCAD.xcodeproj -scheme NanoCAD -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -resultBundlePath TestResults.xcresult test
+      - run: xcodebuild -project NanoCAD.xcodeproj -scheme NanoCAD -destination "platform=iOS Simulator,id=$SIMULATOR_ID" -parallel-testing-enabled NO -resultBundlePath TestResults.xcresult test
       - uses: actions/upload-artifact@v4
         if: always()
         with:

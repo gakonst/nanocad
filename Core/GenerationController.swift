@@ -1,8 +1,11 @@
 import Foundation
+import UIKit
 import Observation
 import CryptoKit
 
 protocol GenerationClient: Sendable {
+    func prepare(_ generation: PendingGeneration) async throws
+    func localResult(agentID: String, turnID: String) async throws -> (preview: Data, step: Data)?
     func createAgent(requestID: String, inputFiles: [NanocodexInputFile], instructions: String) async throws -> String
     func send(agentID: String, prompt: String, references: [String], revision: String?, requestID: String, turnID: String) async throws -> NanocodexTurnReceipt
     func events(agentID: String, after: String, untilTurnID: String?, receive: @escaping @Sendable (NanocodexEvent) async -> Void) async throws
@@ -12,10 +15,14 @@ protocol GenerationClient: Sendable {
     func downloadFile(agentID: String, path: String, expectedDigest: String?) async throws -> URL
     func close()
 }
+extension GenerationClient {
+    func prepare(_ generation: PendingGeneration) async throws {}
+    func localResult(agentID: String, turnID: String) async throws -> (preview: Data, step: Data)? { nil }
+}
 extension NanocodexClient: GenerationClient {}
 
-struct PendingGeneration: Codable {
-    struct File: Codable { var path: String; var data: Data }
+struct PendingGeneration: Codable, Sendable {
+    struct File: Codable, Sendable { var path: String; var data: Data }
     var creationID = UUID().uuidString
     var requestID = UUID().uuidString
     var turnID = UUID().uuidString
@@ -48,7 +55,10 @@ final class GenerationController {
     var canResume: Bool { pending != nil && !busy }
 
     init(root: URL? = nil, loadCredentials: () throws -> NanocodexCredentials? = ConnectionCredentials.load,
-         makeClient: @escaping (NanocodexCredentials) -> any GenerationClient = { NanocodexClient(credentials: $0) }) {
+         makeClient: @escaping (NanocodexCredentials) -> any GenerationClient = { credentials in
+             if credentials.connect != nil { return ConnectCADClient(credentials: credentials) }
+             return NanocodexClient(credentials: credentials)
+         }) {
         self.root = root ?? URL.documentsDirectory.appending(path: "NanoCAD", directoryHint: .isDirectory)
         self.makeClient = makeClient
         do { credentials = try loadCredentials() } catch { self.error = error.localizedDescription }
@@ -80,7 +90,7 @@ final class GenerationController {
             let references = inputDocument?.promptReferences(selectedReferences) ?? []
             let revision = step.map(Self.digest)
             let instructions = """
-            NanoCAD ships its real STEP-to-preview exporter at /brain/tools/export_step.py. Use it; do not synthesize preview JSON. Mount a native hand, create a venv there, install cadgen==0.6.6, and run python /brain/tools/export_step.py /brain/outputs/model.step --out /brain/outputs/model.cad.json. The native hand can access /brain. If its namespace cannot, transfer only these task inputs using available file tools. Use build123d for real CAD modeling, then export the saved STEP before the preview. The exporter uses cadgen's exact topology references.
+            NanoCAD ships its real STEP-to-preview exporter at /brain/tools/export_step.py. Use it; do not synthesize preview JSON. Mount provider cf_sandbox. Use its preinstalled uv to install Python 3.12 and cadgen==0.6.6 in a container-local /opt/nanocad environment (avoid putting dependencies on the /brain or /workspace FUSE mount), and run python /brain/tools/export_step.py /brain/outputs/model.step --out /brain/outputs/model.cad.json. The native hand can access /brain. If its namespace cannot, transfer only these task inputs using available file tools. Use build123d for real CAD modeling, then export the saved STEP before the preview. The exporter uses cadgen's exact topology references.
             \(step != nil ? "The current document is /brain/input/model.step. Any selected reference filename refers to those exact bytes, originally named \(document?.name ?? "imported.step"). Its exact SHA-256 revision is \(revision ?? ""). Verify it before resolving model.step references with cadgen.read_scene. Preserve dimensions not requested to change." : "Create a new CAD model from the user's brief; use millimeters and record any dimensional assumptions.")
             \(markup != nil ? "An annotated viewport image is at /brain/input/markup.jpg. Open it with view_image and use its marks as visual context for the user's request." : "")
             \(importing ? "This is an import for viewing: preserve the original STEP bytes by copying /brain/input/model.step to /brain/outputs/model.step; export only the preview. Do not modify the geometry." : "Check the resulting saved STEP is valid with positive volume where a solid was requested. Export the final STEP and JSON only when checks pass.")
@@ -106,7 +116,10 @@ final class GenerationController {
         let client = makeClient(credentials)
         let stopping = saved.stopRequested == true
         work = Task {
+            let previousIdleTimerSetting = UIApplication.shared.isIdleTimerDisabled
+            if credentials.connect != nil { UIApplication.shared.isIdleTimerDisabled = true }
             defer {
+                UIApplication.shared.isIdleTimerDisabled = previousIdleTimerSetting
                 busy = false; client.close(); work = nil
                 // Stop joins the cancelled observer before using a new client. Its
                 // persisted intent survives relaunch and never resubmits the turn.
@@ -114,6 +127,7 @@ final class GenerationController {
             }
             do {
                 guard var current = pending else { return }
+                try await client.prepare(current)
                 if current.agentID == nil {
                     status = stopping ? "Reconciling workspace before stopping…" : "Preparing CAD workspace…"
                     let agent = try await client.createAgent(requestID: current.creationID, inputFiles: current.files.map { .init(path: $0.path, data: $0.data) }, instructions: current.instructions)
@@ -158,6 +172,10 @@ final class GenerationController {
                 try clearPending()
                 status = "Model ready"
             } catch {
+                if case NanocodexError.missingCADOutput = error {
+                    pending?.phase = "failed"
+                    try? persist()
+                }
                 if Task.isCancelled || error is CancellationError {
                     status = pending?.stopRequested == true ? "Stopping…" : "Generation paused · Tap to resume"
                 } else {
@@ -200,12 +218,23 @@ final class GenerationController {
         else { resume() }
     }
 
+    func retryFailedRun() {
+        guard let previous = pending, previous.phase == "failed", !busy else { return }
+        let next = PendingGeneration(prompt: previous.prompt, references: previous.references,
+            revision: previous.revision, files: previous.files, instructions: previous.instructions,
+            origin: credentials?.origin)
+        pending = next
+        do { try persist() } catch { pending = previous; self.error = error.localizedDescription; return }
+        response = ""; resume()
+    }
+
     func forgetFailedRun() {
         guard pending?.phase == "failed", !busy else { return }
         do { try clearPending(); status = "" } catch { self.error = error.localizedDescription }
     }
 
     private func downloadResult(client: any GenerationClient, agentID: String, turnID: String) async throws -> (Data, Data) {
+        if let local = try await client.localResult(agentID: agentID, turnID: turnID) { return (local.preview, local.step) }
         let page = try await client.artifacts(agentID: agentID, turnID: turnID)
         let publication = page.publications.first { $0.turnID == turnID }
         guard let publication, ["ready", "failed"].contains(publication.state) else {

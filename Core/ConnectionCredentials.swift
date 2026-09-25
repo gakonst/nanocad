@@ -15,7 +15,7 @@ enum ConnectionCredentials {
         if status == errSecItemNotFound { return nil }
         guard status == errSecSuccess, let data = result as? Data else { throw KeychainError(status: status) }
         let stored = try JSONDecoder().decode(NanocodexCredentials.self, from: data)
-        return try NanocodexCredentials(origin: stored.origin, apiKey: stored.apiKey)
+        return try stored.validated()
     }
 
     static func save(_ value: NanocodexCredentials) throws {
